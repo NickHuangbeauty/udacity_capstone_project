@@ -1,3 +1,4 @@
+import email
 import os
 import re
 import logging
@@ -30,4 +31,9 @@ each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i) for i in range(len(file
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 
 
-
+# Default args for DAG
+default_args = {
+    'owner': 'airflow',
+    'depends_on_past': False,
+    'email': [],
+}
