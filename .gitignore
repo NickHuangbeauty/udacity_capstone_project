@@ -1,0 +1,4 @@
+.vscode
+./airflow/data/immigration_data
+./airflow/data/news_data
+./airflow/data/usCitiesDemographics_data

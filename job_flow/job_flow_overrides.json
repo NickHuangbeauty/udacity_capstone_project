@@ -1,0 +1,50 @@
+{
+    "Name": "string",
+    "ReleaseLabel": "emr-5.29.0",
+    "Application": [{"Name": "Hadoop"}, {"Name": "Spark"}, {"Name": "Zeppelin"}, {"Name": "Hive"}],
+    "BootstrapActions": [
+      {
+         "Name": "bootstrap_emr",
+         "ScriptBootstrapAction": {
+            // "Args": [ "string" ],
+            "Path": "s3://{{ var.value.bootstrap_bucket }}/bootstrap.sh"
+         }
+      }
+    ],
+    "Configurations": [
+      {
+         "Classification": "string",
+         "Configurations": [
+            "Configuration"
+         ],
+         "Properties": {
+            "string" : "string"
+         }
+      }
+    ],
+    "Instances": {
+        "Ec2KeyName": "my-key-pair",  // check
+        "Ec2SubnetId": "subnet-ec57ca94",  // check
+        "InstanceGroups": [
+            {
+                "Name": "Primary node",
+                "Market": "ON_DEMAND",
+                "InstanceRole": "MASTER",
+                "InstanceType": "m5.xlarge",
+                "InstanceCount": 1
+            },
+            {
+                "Name": "Core node - 2",
+                "Market": "ON_DEMAND",
+                "InstanceRole": "CORE",
+                "InstanceType": "m5.xlarge",
+                "InstanceCount": 2
+            }
+        ],
+        "KeepJobFlowAliveWhenNoSteps": "True",
+        "TerminationProtected": "False"
+    },
+    "LogUri": "s3://{{ var.value.log_bucket }}/emrlogs/",
+    "JobFlowRole": "{{ var.value.JobFlowRole }}", // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole"
+    "ServiceRole": "{{ var.value.ServiceRole }}"
+}
