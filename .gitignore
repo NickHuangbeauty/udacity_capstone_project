@@ -1,2 +1,2 @@
 .vscode
-./airflow/data/*
+./airflow/data/
