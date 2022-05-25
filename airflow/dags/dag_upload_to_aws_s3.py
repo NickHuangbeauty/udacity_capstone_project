@@ -13,18 +13,17 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
 
 
-filename = '' # Path the local file
-bucket_key = 's3://mydatapool/upload_data/'  # Path to the S3 bucket
-dest_bucket = 'mydatapool'
+BUCKET_KEY = 's3://mydatapool/upload_data/'  # Path to the S3 bucket
+DEST_BUCKET = 'mydatapool'
 
 
-# access each data by filepath
+# ****** access each data by filepath ******
 filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/data'
 
-# local data absolute path which is uploaded to S3
+# ****** local data absolute path which is uploaded to S3 ******
 filepath_all = [os.path.join(root, file) for root, dirs, files in os.walk(filepath) for file in files]
 
-
+# ****** get the task name, s3_ky and file name from the file_path ******
 files = [file_ for root, dirs, files in os.walk(filepath) for file_ in files]
 
 # s3 key where is saved upload of destination of aws s3 location
@@ -33,7 +32,10 @@ s3_key_filename = [re.search(r'/data/*.*', each_filepath)[0] for each_filepath i
 each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i) for i in range(len(files)) ]
 
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
+# ************************************************************************
 
+
+# Start: DAG
 DAG_ID = f"Step1:{os.path.basename(__file__).replace('.py', '')}" # This file name.
 
 # Default args for DAG
@@ -69,8 +71,8 @@ with DAG(DAG_ID,
                 task_id=f"upload_to_s3_{each_filepath[0]}",
                 source_path=each_filepath[2],
                 destination_path=each_filepath[1],
-                bucket_key=bucket_key,
-                dest_bucket=dest_bucket,
+                bucket_key=BUCKET_KEY,
+                dest_bucket=DEST_BUCKET,
                 replace=True,
                 task_group=task_group_upload_to_aws_s3
             )
