@@ -1,2 +1,5 @@
 .vscode
 ./airflow/data/
+airflow/airflow.cfg
+airflow/logs/
+airflow/webserver_config.py
