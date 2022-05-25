@@ -8,10 +8,9 @@ from airflow.models import Variable
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
 
-from airflow.contrib.operators.emr_add_steps_operator import EmrAddStepOperator
-from airflow.contrib.operators.emr_create_job_flow_operator import EmrCreateJobFlowOperator
-from airflow.contrib.sensors.emr_step_sensor import EmrStepSensor
-
+from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOperator
+from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreateJobFlowOperator
+from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 
 SPARK_STEP = {
 
@@ -44,14 +43,14 @@ with DAG(DAG_ID,
          schedule_interval='@hour',
          tags=['Step2_aws_emr_to_s3']
          ) as dag:
-    
+
     start = DummyOperator(task_id='start to Add  EMR Step')
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator()
 
     # An operator that adds steps to an existing EMR job_flow.
-    add_steps = EmrAddStepOperator()
+    add_steps = EmrAddStepsOperator()
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
     wait_for_step = EmrStepSensor()
