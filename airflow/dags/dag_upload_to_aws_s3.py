@@ -1,11 +1,9 @@
-import email
 import os
 import re
 import logging
 import datetime
 
 from airflow.models import DAG
-from airflow.models import Variable
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
 
@@ -39,7 +37,7 @@ files_path = list(zip(each_file, s3_key_filename, filepath_all))
 DAG_ID = f"Step1:{os.path.basename(__file__).replace('.py', '')}" # This file name.
 
 # Default args for DAG
-default_args = {
+DEFAULT_ARGS = {
     'owner': 'udacity',
     'depends_on_past': False,
     'start_date': datetime.datetime(2022, 1, 12),
@@ -49,14 +47,16 @@ default_args = {
 }
 
 
+logging.info(f"Starting DAG_ID: {DAG_ID}")
+
 with DAG(DAG_ID,
          description="upload_to_aws_s3",
-         default_args=default_args,
+         default_args=DEFAULT_ARGS,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
          schedule_interval='@hour',
-         tags=['test_v1']) as dag:
+         tags=['Step1_upload_to_aws_s3']) as dag:
 
     start = DummyOperator(task_id='Start load data from local to aws s3')
 
@@ -66,7 +66,9 @@ with DAG(DAG_ID,
                    max_active_runs=1) as task_group_upload_to_aws_s3:
 
         for each_filepath in files_path:
-            # Task
+            # Show log for each task
+            logging.info(f"Uploading: {each_filepath[0]}")
+
             task = LocalFilesystemToS3Operator(
                 task_id=f"upload_to_s3_{each_filepath[0]}",
                 source_path=each_filepath[2],
@@ -79,5 +81,5 @@ with DAG(DAG_ID,
 
     end = DummyOperator(task_id='Completely load data from local to aws s3')
 
-        # schedule for this dag processes
+    # schedule for this dag processes
     start >> task_group_upload_to_aws_s3 >> end
