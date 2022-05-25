@@ -12,10 +12,11 @@ from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemTo
 
 
 BUCKET_KEY = 's3://mydatapool/upload_data/'  # Path to the S3 bucket
+BUCKET_KEY_EMR = 's3://mydatapool/upload_emr_file/'
 DEST_BUCKET = 'mydatapool'
 
 
-# ****** access each data by filepath ******
+# ******************** access each data by filepath **********************
 filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/data'
 
 # ****** local data absolute path which is uploaded to S3 ******
@@ -33,12 +34,17 @@ files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
 
+# ******************** access emr file by filepath **********************
+emr_filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/data_spark_on_emr.py'
+# ************************************************************************
+
+
 # Start: DAG
 DAG_ID = f"Step1:{os.path.basename(__file__).replace('.py', '')}" # This file name.
 
 # Default args for DAG
 DEFAULT_ARGS = {
-    'owner': 'udacity',
+    'owner': 'OneForALL',
     'depends_on_past': False,
     'start_date': datetime.datetime(2022, 1, 12),
     'retries': 3,
@@ -65,11 +71,26 @@ with DAG(DAG_ID,
                    provide_context=True,
                    max_active_runs=1) as task_group_upload_to_aws_s3:
 
+        logging.info("Start to upload files to aws s3: data_spark_on_emr")
+
+        # Upload data_spark_on_emr.py from local to aws s3
+        upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
+            task_id='upload_emr_file_from_local_to_s3',
+            source_path=emr_filepath,
+            destination_path='upload_emr_file',
+            dest_key=BUCKET_KEY_EMR,
+            dest_bucket=DEST_BUCKET,
+            replace=True,
+            task_group=task_group_upload_to_aws_s3
+        )
+
+        logging.info("Completely to upload files to aws s3: data_spark_on_emr")
+
         for each_filepath in files_path:
             # Show log for each task
             logging.info(f"Uploading: {each_filepath[0]}")
 
-            task = LocalFilesystemToS3Operator(
+            upload_data_from_local_to_s3 = LocalFilesystemToS3Operator(
                 task_id=f"upload_to_s3_{each_filepath[0]}",
                 source_path=each_filepath[2],
                 destination_path=each_filepath[1],
@@ -79,7 +100,7 @@ with DAG(DAG_ID,
                 task_group=task_group_upload_to_aws_s3
             )
 
-    end = DummyOperator(task_id='Completely load data from local to aws s3')
+    end = DummyOperator(task_id='Completely load data and emr file from local to aws s3')
 
     # schedule for this dag processes
     start >> task_group_upload_to_aws_s3 >> end

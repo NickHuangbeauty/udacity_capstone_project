@@ -1,5 +1,4 @@
 import os
-import re
 import logging
 import datetime
 
@@ -12,7 +11,7 @@ from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreate
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 
 SPARK_STEP = {
-
+    
 }
 
 # Format the json
@@ -21,7 +20,7 @@ JOB_FLOW_OVERRIDES = {
 }
 
 DEFAULT_ARGS = {
-    'owner': 'udacity',
+    'owner': 'OneForALL',
     'depends_on_past': False,
     'start_date': datetime.datetime(2022, 1, 12),
     'retries': 3,
@@ -36,10 +35,13 @@ logging.info("Starting DAG_ID: {DAG_ID}")
 
 with DAG(DAG_ID,
          default_args=DEFAULT_ARGS,
+        #  maximum number of active DAG runs, beyond this number of DAG runs in a running state, the scheduler won't create new active DAG runs
          max_active_runs=1,
+         #  Perform scheduler catchup (or only run latest)? Defaults to True
          catchup=False,
          #  Schedule once and only once
          schedule_interval='@hour',
+         #  List of tags to help filtering DAGs in the UI.
          tags=['Step2_aws_emr_to_s3']
          ) as dag:
 

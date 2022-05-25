@@ -1,5 +1,5 @@
 {
-    "Name": "string",
+    "Name": "udacity_capstone_spark_on_emr",
     "ReleaseLabel": "emr-5.29.0",
     "Application": [{"Name": "Hadoop"}, {"Name": "Spark"}, {"Name": "Zeppelin"}, {"Name": "Hive"}],
     "BootstrapActions": [
@@ -7,7 +7,7 @@
          "Name": "bootstrap_emr",
          "ScriptBootstrapAction": {
             // "Args": [ "string" ],
-            // Set bootstrap_bucket in Airflow variables
+            // TODO:Set bootstrap_bucket in Airflow variables
             "Path": "s3://{{ var.value.bootstrap_bucket }}/bootstrap.sh"
          }
       }
@@ -26,9 +26,10 @@
       }
     ],
     "Instances": {
-        // Set Ec2KeyName and Ec2SubnetId in Airflow variables
-        "Ec2KeyName": "my-key-pair",  // check
-        "Ec2SubnetId": "subnet-ec57ca94",  // check
+        // TODO:Set Ec2KeyName and Ec2SubnetId in Airflow variables
+        // TODO: Check Ec2KeyName and Ec2SubnetId
+        "Ec2KeyName": "my-key-pair",
+        "Ec2SubnetId": "subnet-ec57ca94",
         "InstanceGroups": [
             {
                 "Name": "Primary node",
@@ -50,7 +51,7 @@
     },
     "LogUri": "s3://{{ var.value.log_bucket }}/emrlogs/",
     // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole"
-    // Set JobFlowRole and ServiceRole in Airflow variables
+    // TODO:Set JobFlowRole and ServiceRole in Airflow variables
     "JobFlowRole": "{{ var.value.JobFlowRole }}",
     "ServiceRole": "{{ var.value.ServiceRole }}"
 }
