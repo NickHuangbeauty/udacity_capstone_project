@@ -57,10 +57,9 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
         .withColumn("imm_person_birth_year", col("biryear").cast("Integer"))\
         .withColumn("imm_person_gender", col("gender").cast("String"))\
         .withColumn("imm_visatype", col("visatype").cast("String")).select(col("imm_per_cic_id"),
-                                                                           col(
-            "imm_person_birth_year"),
-        col("imm_person_gender"),
-        col("imm_visatype"))
+                                                                           col("imm_person_birth_year"),
+                                                                           col("imm_person_gender"),
+                                                                           col("imm_visatype"))
 
     df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView("imm_personal")
 
@@ -93,29 +92,29 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
         udf_convert_to_datetime = udf(lambda x: convert_to_datetime(x), DateType())
 
         immigration_main_information = df_imm_data.withColumn("imm_main_cic_id", col("cicid").cast("Integer"))\
-            .withColumn("imm_year", col("i94yr").cast("Integer"))\
-            .withColumn("imm_month", col("i94mon").cast("Integer"))\
-            .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
-            .withColumn("imm_visa", col("i94visa").cast("Integer"))\
-            .withColumn("imm_port", col("i94port").cast("String"))\
-            .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
-            .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
-            .withColumn("imm_model", col("i94mode").cast("Integer"))\
-            .withColumn("imm_address", col("i94addr").cast("String"))\
-            .withColumn("imm_airline", col("airline").cast("String"))\
-            .withColumn("imm_flight_no", col("fltno").cast("String"))\
-            .select(col('imm_main_cic_id'),
-                    col('imm_year'),
-                    col('imm_month'),
-                    col('imm_cntyl'),
-                    col('imm_visa'),
-                    col('imm_port'),
-                    col('imm_arrival_date'),
-                    col('imm_departure_date'),
-                    col('imm_model'),
-                    col('imm_address'),
-                    col('imm_airline'),
-                    col('imm_flight_no'))
+                                                    .withColumn("imm_year", col("i94yr").cast("Integer"))\
+                                                        .withColumn("imm_month", col("i94mon").cast("Integer"))\
+                                                            .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
+                                                                .withColumn("imm_visa", col("i94visa").cast("Integer"))\
+                                                                    .withColumn("imm_port", col("i94port").cast("String"))\
+                                                                        .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
+                                                                            .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
+                                                                                .withColumn("imm_model", col("i94mode").cast("Integer"))\
+                                                                                    .withColumn("imm_address", col("i94addr").cast("String"))\
+                                                                                        .withColumn("imm_airline", col("airline").cast("String"))\
+                                                                                            .withColumn("imm_flight_no", col("fltno").cast("String"))\
+                            .select(col('imm_main_cic_id'),
+                                        col('imm_year'),
+                                            col('imm_month'),
+                                                col('imm_cntyl'),
+                                                    col('imm_visa'),
+                                                        col('imm_port'),
+                                                            col('imm_arrival_date'),
+                                                                col('imm_departure_date'),
+                                                                    col('imm_model'),
+                                                                        col('imm_address'),
+                                                                            col('imm_airline'),
+                                                                                col('imm_flight_no'))
 
         df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView("immigration_main_information_data")
 
