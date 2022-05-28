@@ -1,5 +1,6 @@
 import os
 import configparser
+import logging
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, monotonically_increasing_id, udf, to_date
@@ -19,6 +20,7 @@ os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
 os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
 
 def create_spark_session():
+    # sourcery skip: inline-immediately-returned-variable
     """
     Purpose:
         Build an access spark session for dealing data ETL of Data Lake
@@ -31,11 +33,15 @@ def create_spark_session():
         .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
         .getOrCreate()
 
+    logging.info("Spark information: {spark}")
+
+    logging.info(spark.sparkContext.getConf().getAll())
+
     return spark
 
 
 def process_dim_immigration(spark, source_bucket, dest_bucket) -> None:
-    pass
+    
 
 
 def process_dim_news(spark, source_bucket, dest_bucket) -> None:
