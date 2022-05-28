@@ -125,8 +125,9 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
         df_immigration_main_information_tmp.explain()
 
-        df_immigration_main_information_tmp.write.mode("override").partitionBy("imm_year", "imm_month").parquet(
-            path=f'{DEST_S3_BUCKET}dimension_table/immigration_main_information')
+        df_immigration_main_information_tmp.write.mode("override") \
+                                           .partitionBy("imm_year", "imm_month") \
+                                           .parquet(path=f'{DEST_S3_BUCKET}dimension_table/immigration_main_information')
 
 def process_dim_news(spark, source_bucket, dest_bucket) -> None:
     pass
