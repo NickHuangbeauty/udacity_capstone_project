@@ -3,3 +3,4 @@
 airflow/airflow.cfg
 airflow/logs/
 airflow/webserver_config.py
+./dl.cfg
