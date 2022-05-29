@@ -283,13 +283,51 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     df_imm_visa.write.mode("overwrite") \
                .parquet(path = f'{DEST_S3_BUCKET}dimension_table/imm_visa')
 
-def process_dim_label(spark, source_bucket, dest_bucket) -> None:
-    pass
 
+def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
+    """process_fact_notifications _summary_
 
-def process_fact_notifications(spark, source_bucket, dest_bucket) -> None:
-    pass
+    _extended_summary_
+        ** t1: join imm two tables
+        ** t2: join news table with t1
+        ** t3: join us cities table with t2
+    Args:
+        spark (_type_): _description_
+        SOURCE_S3_BUCKET (_type_): _description_
+        DEST_S3_BUCKET (_type_): _description_
+    """
+    df_notification = spark.sql(
+        "WITH t1 AS \
+            (SELECT * \
+               FROM immigration_main_information_data imid \
+             LEFT JOIN imm_personal ip \
+                    ON imid.imm_main_cic_id = ip.imm_per_cic_id \
+                 WHERE imid.imm_year = 2016 \
+            ), t2 AS \
+                (SELECT * \
+                   FROM t1 \
+                 LEFT JOIN news_article_data nad \
+                        ON t1.imm_arrival_date = nad.news_publish_time \
+            ) \
+            SELECT t2.imm_main_cic_id \
+                   t2.imm_per_cic_id \
+                   t2.news_cord_uid \
+                   src.cidemo_id \
+                   src.value_of_imm_destination_city \
+                   t2.news_title \
+                   t2.news_abstract \
+                   t2.news_publish_time \
+                   t2.news_authors \
+              FROM t2 \
+            LEFT JOIN (SELECT * FROM us_cities_demographics_data ucdd INNER JOIN imm_destination_city_data idcd ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city) src \
+                   ON t2.imm_port = src.code_of_imm_destination_city \
+        "
+    )
 
+    # Saved in AWS S3
+    df_notification.write.mode("overwrite") \
+                   .partitionBy("news_publish_time") \
+                   .parquet(path = f'{DEST_S3_BUCKET}fact_table/notification')
 
 def main():
 
@@ -300,17 +338,16 @@ def main():
     process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating dimension table: news
-    process_dim_news(spark, source_bucket, dest_bucket)
+    process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating dimension table: us cities Demographics
-    process_dim_us_cities_demographics(
-        spark, source_bucksource_bucket, dest_bucket)
+    process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating dimension table: label for immigration
-    process_dim_label(spark, source_bucket, dest_bucket)
+    process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating fact table: notifications
-    process_fact_notifications(spark, source_bucket, dest_bucket)
+    process_fact_notifications(spark, DEST_S3_BUCKET)
 
 
 if __name__ == "__main__":
