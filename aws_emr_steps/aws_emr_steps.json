@@ -16,7 +16,7 @@
     // },
     {
         "Name": "For Dealing with data and analytics using Spark on AWS EMR",
-        "ActionOnFailure": "CONTINUE",
+        "ActionOnFailure": "CANCEL_AND_WAIT",
         "HadoopJarStep": {
             // TODO:Set bootstrap_bucket in Airflow variables
             // Using spark-summit to execute the data_spark_on_emr python file for dealing with data.

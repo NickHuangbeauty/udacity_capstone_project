@@ -12,9 +12,8 @@ from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemTo
 
 
 BUCKET_KEY = 's3://mydatapool/upload_data/'  # Path to the S3 bucket
-BUCKET_KEY_EMR = 's3://mydatapool/upload_emr_file/'
 DEST_BUCKET = 'mydatapool'
-
+UPLOAD_EMR_FILE = 's3://mydatapool/upload_data/script/'
 
 # ******************** access each data by filepath **********************
 filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/data'
@@ -76,9 +75,10 @@ with DAG(DAG_ID,
         # Upload data_spark_on_emr.py from local to aws s3
         upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
             task_id='upload_emr_file_from_local_to_s3',
+            # local target file path
             source_path=emr_filepath,
-            destination_path='upload_emr_file',
-            dest_key=BUCKET_KEY_EMR,
+            dest_key=UPLOAD_EMR_FILE,
+            # Destination bucket key
             dest_bucket=DEST_BUCKET,
             replace=True,
             task_group=task_group_upload_to_aws_s3
