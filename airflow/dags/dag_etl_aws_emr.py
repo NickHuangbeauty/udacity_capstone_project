@@ -8,10 +8,23 @@ from airflow.operators.dummy_operator import DummyOperator
 
 from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOperator
 from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreateJobFlowOperator
+from airflow.providers.amazon.aws.operators.emr_terminate_job_flow import EmrTerminateJobFlowOperator
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 
 SPARK_STEP = {
-    
+    "Name": "Spark Step for ETL",
+    "ActionONFailure": "CANCEL_AND_WAIT",
+    "HadoopJarStep": {
+        "Jar": "command-runner.jar",
+        "Args": [
+            "spark-submit",
+            "--packages",
+            "spark-sas7bdat:3.0.0-s_2.12",
+            "--deploy-mod",
+            "client",
+            "s3://s3://mydatapool/upload_data/script/data_spark_on_emr.py"
+        ]
+    }
 }
 
 # Format the json
@@ -51,6 +64,7 @@ with DAG(DAG_ID,
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
+        task_id='Create_Emr_Cluster',
         aws_conn_id='aws_default',
         emr_conn_id='aws_emr_default',
         job_flow_overrides=JOB_FLOW_OVERRIDES,
@@ -59,21 +73,29 @@ with DAG(DAG_ID,
 
     # An operator that adds steps to an existing EMR job_flow.
     add_steps = EmrAddStepsOperator(
+        task_id='Add_EMR_Step',
         aws_conn_id='aws_default',
-        job_flow_overrides=JOB_FLOW_OVERRIDES,
-        job_flow_name='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
         cluster_states=['WAITING'],
         steps=SPARK_STEP,
     )
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
     wait_for_step = EmrStepSensor(
+        task_id='Wait_for_Step',
         job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
-        step_id='{{ task_instance.xcom_pull(task_ids="Add EMR Step") }}',
+        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step") }}',
+        aws_conn_id='aws_default',
         target_states=['COMPLETED'],
         failed_states=['FAILED'],
     )
 
+    EmrTerminateJobFlowOperator(
+        task_id='terminal_emr_cluster',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
+        aws_conn_id='aws_default',
+    )
+
     end = DummyOperator(task_id='End to Add EMR Step')
 
-    start >> create_job_flow >> add_steps >> wait_for_step >> end
+    start >> create_job_flow >> add_steps >> wait_for_step >> EmrTerminateJobFlowOperator >> end

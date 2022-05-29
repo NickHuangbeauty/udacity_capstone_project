@@ -36,7 +36,6 @@ def create_spark_session():
         .builder \
         .appName("spark_emr_udactity") \
         .config("spark.jars.packages", "saurfang:spark-sas7bdat:3.0.0-s_2.12") \
-        .config("spark.jars.packages", "org.apache.hadoop:hadoop-aws:2.7.0") \
         .getOrCreate()
 
     logging.info("Spark information: {spark}")
@@ -143,6 +142,15 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
 
 def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+    """process_dim_news _summary_
+
+    _extended_summary_
+
+    Args:
+        spark (_type_): _description_
+        SOURCE_S3_BUCKET (_type_): _description_
+        DEST_S3_BUCKET (_type_): _description_
+    """
     news_path = os.path.join(SOURCE_S3_BUCKET, "data/news_data/metadata.csv")
 
     df_news = spark.read.options(header=True, delimiter=',').csv(path=news_path)
@@ -178,6 +186,15 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
 
 def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+    """process_dim_us_cities_demographics _summary_
+
+    _extended_summary_
+
+    Args:
+        spark (_type_): _description_
+        SOURCE_S3_BUCKET (_type_): _description_
+        DEST_S3_BUCKET (_type_): _description_
+    """
     us_cities_demographics_path = os.path.join(SOURCE_S3_BUCKET, "data/usCitiesDemographics_data/usCitiesDemo.csv")
 
     df_us_cities_demographics = spark.read.options(header=True, delimiter=';').csv(us_cities_demographics_path)
@@ -217,6 +234,18 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
 
 
 def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+    """process_dim_label _summary_
+
+    _extended_summary_
+
+    Args:
+        spark (_type_): _description_
+        SOURCE_S3_BUCKET (_type_): _description_
+        DEST_S3_BUCKET (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
     imm_label_path = os.path.join(SOURCE_S3_BUCKET, "data/immigration_data/immigration_labels_descriptions.SAS")
 
     with open(imm_label_path) as f:

@@ -1,7 +1,7 @@
 {
     "Name": "udacity_capstone_spark_on_emr",
     "ReleaseLabel": "emr-5.29.0",
-    "Application": [{"Name": "Hadoop"}, {"Name": "Spark"}, {"Name": "Zeppelin"}, {"Name": "Hive"}],
+    "Application": [{"Name": "Hadoop"}, {"Name": "Spark"}],
     "BootstrapActions": [
       {
          "Name": "bootstrap_emr",
@@ -32,14 +32,14 @@
         "Ec2SubnetId": "subnet-ec57ca94",
         "InstanceGroups": [
             {
-                "Name": "Primary node",
+                "Name": "Primary_Node",
                 "Market": "ON_DEMAND",
                 "InstanceRole": "MASTER",
                 "InstanceType": "m5.xlarge",
                 "InstanceCount": 1
             },
             {
-                "Name": "Core node - 2",
+                "Name": "Core_Node_2",
                 "Market": "ON_DEMAND",
                 "InstanceRole": "CORE",
                 "InstanceType": "m5.xlarge",
@@ -53,5 +53,6 @@
     // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole"
     // TODO:Set JobFlowRole and ServiceRole in Airflow variables
     "JobFlowRole": "{{ var.value.JobFlowRole }}",
-    "ServiceRole": "{{ var.value.ServiceRole }}"
+    "ServiceRole": "{{ var.value.ServiceRole }}",
+    "VisibleToAllUsers": "True"
 }
