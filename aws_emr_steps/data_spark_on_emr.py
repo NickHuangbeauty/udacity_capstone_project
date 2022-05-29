@@ -79,7 +79,7 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     df_immigration_personal_tmp.persist()
 
-    df_immigration_personal_tmp.explain()
+    # df_immigration_personal_tmp.explain()
 
     df_immigration_personal_tmp.write.mode("override") \
                                .partitionBy("imm_person_birth_year") \
@@ -135,7 +135,7 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
         df_immigration_main_information_tmp.persist()
 
-        df_immigration_main_information_tmp.explain()
+        # df_immigration_main_information_tmp.explain()
 
         df_immigration_main_information_tmp.write.mode("override") \
                                            .partitionBy("imm_year", "imm_month") \
@@ -170,7 +170,7 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     df_news_tmp.persist()
 
-    df_news_tmp.explain()
+    # df_news_tmp.explain()
 
     df_news_tmp.write.mode("overwrite") \
                      .partitionBy("news_publish_time") \
@@ -210,7 +210,7 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
 
     df_us_cities_demographics_temp.persist()
 
-    df_us_cities_demographics_temp.explain()
+    # df_us_cities_demographics_temp.explain()
 
     df_us_cities_demographics_temp.write.mode("overwrite") \
                                   .parquet(path = f'{DEST_S3_BUCKET}dimension_table/us_cities_demographics_data')
@@ -255,6 +255,8 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView("imm_destination_city_data")
 
     df_imm_destination_city_tmp = spark.sql("SELECT * FROM imm_destination_city_data")
+
+    df_imm_destination_city_tmp.persist()
 
     # Saved in AWS S3
     df_imm_destination_city_tmp.write.mode("overwrite") \
