@@ -1,7 +1,8 @@
 import os
 import re
 import logging
-import datetime
+import configparser
+from datetime import datetime, timedelta
 
 from airflow.models import DAG
 from airflow.utils.task_group import TaskGroup
@@ -10,44 +11,51 @@ from airflow.operators.dummy_operator import DummyOperator
 # https://airflow.apache.org/docs/apache-airflow-providers-amazon/3.3.0/_modules/airflow/providers/amazon/aws/transfers/local_to_s3.html
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
 
+# ******* Access AWS Server *******
+config = configparser.ConfigParser()
+config.read_file(open('/Users/oneforall_nick/.aws/credentials'))
+os.environ['AWS_ACCESS_KEY_ID'] = config['default']['aws_access_key_id']
+os.environ['AWS_SECRET_ACCESS_KEY'] = config['default']['aws_secret_access_key']
+# **********************************
 
-BUCKET_KEY = 's3://mydatapool/upload_data/'  # Path to the S3 bucket
+
+UPLOAD_ETL_EMR_S3_KEY = 'upload_data/script/data_spark_on_emr.py'  # Path to the S3 bucket
 DEST_BUCKET = 'mydatapool'
 UPLOAD_EMR_FILE = 's3://mydatapool/upload_data/script/'
 
-# ******************** access each data by filepath **********************
-filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/data'
-
+# ******************** Access each data by filepath **********************
+filepath = "/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/data"
 # ****** local data absolute path which is uploaded to S3 ******
 filepath_all = [os.path.join(root, file) for root, dirs, files in os.walk(filepath) for file in files]
 
-# ****** get the task name, s3_ky and file name from the file_path ******
+# ****** Get the task name, s3_ky and file name from the file_path ******
 files = [file_ for root, dirs, files in os.walk(filepath) for file_ in files]
 
 # s3 key where is saved upload of destination of aws s3 location
-s3_key_filename = [re.search(r'/data/*.*', each_filepath)[0] for each_filepath in filepath_all]
+s3_key_filename = [re.search(r'/data/*.*', each_filepath)[0]for each_filepath in filepath_all]
 
-each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i) for i in range(len(files)) ]
+each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)for i in range(len(files))]
 
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
 
-# ******************** access emr file by filepath **********************
-emr_filepath = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/data_spark_on_emr.py'
+# ******************** Access emr file by filepath **********************
+EMR_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/data_spark_on_emr.py'
 # ************************************************************************
 
 
 # Start: DAG
-DAG_ID = f"Step1:{os.path.basename(__file__).replace('.py', '')}" # This file name.
+# This file name.
+DAG_ID = f"Step1_{os.path.basename(__file__).replace('.py', '')}"
 
 # Default args for DAG
 DEFAULT_ARGS = {
-    'owner': 'OneForALL',
+    'owner': 'udacity',
     'depends_on_past': False,
-    'start_date': datetime.datetime(2022, 1, 12),
+    'start_date': datetime(2019, 1, 12),
     'retries': 3,
-    'retry_delay': datetime.timedelta(minutes=5),
+    'retry_delay': timedelta(minutes=5),
     'email_on_retry': False
 }
 
@@ -60,15 +68,13 @@ with DAG(DAG_ID,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
-         schedule_interval='@hour',
+         schedule_interval='0 * * * *',
          tags=['Step1_upload_to_aws_s3']) as dag:
 
-    start = DummyOperator(task_id='Start load data from local to aws s3')
+    start = DummyOperator(task_id='Start_load_data_from_local_to_aws_s3')
 
-    # Task Group
-    with TaskGroup(task_id='upload_to_aws_s3',
-                   provide_context=True,
-                   max_active_runs=1) as task_group_upload_to_aws_s3:
+    # # Task Group
+    with TaskGroup(group_id='upload_to_aws_s3') as task_group_upload_to_aws_s3:
 
         logging.info("Start to upload files to aws s3: data_spark_on_emr")
 
@@ -76,12 +82,10 @@ with DAG(DAG_ID,
         upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
             task_id='upload_emr_file_from_local_to_s3',
             # local target file path
-            source_path=emr_filepath,
-            dest_key=UPLOAD_EMR_FILE,
-            # Destination bucket key
+            filename=EMR_FILEPATH,
+            dest_key=UPLOAD_ETL_EMR_S3_KEY,
             dest_bucket=DEST_BUCKET,
-            replace=True,
-            task_group=task_group_upload_to_aws_s3
+            replace=True
         )
 
         logging.info("Completely to upload files to aws s3: data_spark_on_emr")
@@ -92,15 +96,14 @@ with DAG(DAG_ID,
 
             upload_data_from_local_to_s3 = LocalFilesystemToS3Operator(
                 task_id=f"upload_to_s3_{each_filepath[0]}",
-                source_path=each_filepath[2],
-                destination_path=each_filepath[1],
-                bucket_key=BUCKET_KEY,
+                filename=each_filepath[2],
+                dest_key=each_filepath[1],
                 dest_bucket=DEST_BUCKET,
-                replace=True,
-                task_group=task_group_upload_to_aws_s3
+                replace=True
             )
 
-    end = DummyOperator(task_id='Completely load data and emr file from local to aws s3')
+    end = DummyOperator(
+        task_id='Completely_load_data_and_emr_file_from_local_to_aws_s3')
 
     # schedule for this dag processes
     start >> task_group_upload_to_aws_s3 >> end
