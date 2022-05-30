@@ -82,13 +82,13 @@ with DAG(DAG_ID,
         task_id='Add_Steps',
         job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
         step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step", key="return_value")[0] }}',
-        aws_conn_id='aws_default',
+        aws_conn_id='aws_default'
     )
 
     terminal_job = EmrTerminateJobFlowOperator(
         task_id='terminal_emr_cluster',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster") }}',
-        aws_conn_id='aws_default',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")) }}',
+        aws_conn_id='aws_default'
     )
 
     end = DummyOperator(task_id='End to Add EMR Step')
