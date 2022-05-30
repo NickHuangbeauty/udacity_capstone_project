@@ -26,7 +26,7 @@ DEST_S3_BUCKET = config['S3']['DEST_S3_BUCKET']
 
 
 def create_spark_session():
-    # sourcery skip: inline-immediately-returned-variable
+    # source skip: inline-immediately-returned-variable
     """
     Purpose:
         Build an access spark session for dealing data ETL of Data Lake
@@ -258,7 +258,7 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
         content_dict = [i.split('=') for i in content_line_list[1:]]
         content_dict = [[i[0].strip(), i[1].strip().split(', ')[:][0], e] for i in content_dict if len(i) == 2 for e in i[1].strip().split(', ')[1:]]
         return content_dict
-    
+
     imm_cit_res = code_mapping(context, "i94cntyl")
     imm_port = code_mapping(context, "i94prtl")
     imm_mode = code_mapping(context, "i94model")
@@ -340,15 +340,15 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
                  LEFT JOIN news_article_data nad \
                         ON t1.imm_arrival_date = nad.news_publish_time \
             ) \
-            SELECT t2.imm_main_cic_id \
-                   t2.imm_per_cic_id \
-                   t2.news_cord_uid \
-                   src.cidemo_id \
-                   src.value_of_imm_destination_city \
-                   t2.news_title \
-                   t2.news_abstract \
-                   t2.news_publish_time \
-                   t2.news_authors \
+            SELECT  t2.imm_main_cic_id \
+                   ,t2.imm_per_cic_id \
+                   ,t2.news_cord_uid \
+                   ,src.cidemo_id \
+                   ,src.value_of_imm_destination_city \
+                   ,t2.news_title \
+                   ,t2.news_abstract \
+                   ,t2.news_publish_time \
+                   ,t2.news_authors \
               FROM t2 \
             LEFT JOIN (SELECT * FROM us_cities_demographics_data ucdd INNER JOIN imm_destination_city_data idcd ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city) src \
                    ON t2.imm_port = src.code_of_imm_destination_city \

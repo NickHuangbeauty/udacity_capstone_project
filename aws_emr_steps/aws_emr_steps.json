@@ -1,19 +1,19 @@
 [
-    // {
-    //     "Name": "Upload data_spark_on_emr file from local to aws s3",
-    //     "ActionOnFailure": "CONTINUE",
-    //     "HadoopJarStep": {
-    //         // TODO:Set bootstrap_bucket in Airflow variables
-    //         // TODO: Upload data_spark_on_emr.py from local to AWS S3
-    //         // Using spark-summit to execute the data_spark_on_emr python file for dealing with data.
-    //         "Jar": "command-runner.jar",
-    //         "Args":[
-    //             "s3-dist-cp",
-    //             "--src=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py",
-    //             "--dest=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py"
-    //         ]
-    //     }
-    // },
+    {
+        "Name": "Upload data_spark_on_emr file from local to aws s3",
+        "ActionOnFailure": "CONTINUE",
+        "HadoopJarStep": {
+            // TODO:Set bootstrap_bucket in Airflow variables
+            // TODO: Upload data_spark_on_emr.py from local to AWS S3
+            // Using spark-summit to execute the data_spark_on_emr python file for dealing with data.
+            "Jar": "command-runner.jar",
+            "Args":[
+                "s3-dist-cp",
+                "--src=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py",
+                "--dest=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py"
+            ]
+        }
+    },
     {
         "Name": "For Dealing with data and analytics using Spark on AWS EMR",
         "ActionOnFailure": "CANCEL_AND_WAIT",

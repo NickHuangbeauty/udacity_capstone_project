@@ -20,6 +20,7 @@ os.environ['AWS_SECRET_ACCESS_KEY'] = config['default']['aws_secret_access_key']
 
 
 UPLOAD_ETL_EMR_S3_KEY = 'upload_data/script/data_spark_on_emr.py'  # Path to the S3 bucket
+UPLOAD_SAS_JARS_S3_KEY = 'upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
 DEST_BUCKET = 'mydatapool'
 UPLOAD_EMR_FILE = 's3://mydatapool/upload_data/script/'
 
@@ -39,11 +40,13 @@ each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)for i in range(len(files
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
-
-# ******************** Access emr file by filepath **********************
+# ******************** Access emr file by filepath ***********************
 EMR_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/data_spark_on_emr.py'
 # ************************************************************************
 
+# ******************** Access sas jars file by filepath **********************
+SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
+# ****************************************************************************
 
 # Start: DAG
 # This file name.
@@ -89,6 +92,20 @@ with DAG(DAG_ID,
         )
 
         logging.info("Completely to upload files to aws s3: data_spark_on_emr")
+
+        logging.info("Start to upload files to aws s3: sas jars")
+
+        # Upload data_spark_on_emr.py from local to aws s3
+        upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
+            task_id='upload_sas_jars_file_from_local_to_s3',
+            # local target file path
+            filename=SAS_JARS_FILEPATH,
+            dest_key=UPLOAD_SAS_JARS_S3_KEY,
+            dest_bucket=DEST_BUCKET,
+            replace=True
+        )
+
+        logging.info("Completely to upload files to aws s3: sas jars")
 
         for each_filepath in files_path:
             # Show log for each task
