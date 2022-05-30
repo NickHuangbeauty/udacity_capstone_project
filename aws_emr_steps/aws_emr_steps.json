@@ -1,6 +1,6 @@
 [
     {
-        "Name": "Upload data_spark_on_emr file from local to aws s3",
+        "Name": "Upload sas jars file from local to aws s3",
         "ActionOnFailure": "CONTINUE",
         "HadoopJarStep": {
             // TODO:Set bootstrap_bucket in Airflow variables
@@ -9,8 +9,9 @@
             "Jar": "command-runner.jar",
             "Args":[
                 "s3-dist-cp",
-                "--src=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py",
-                "--dest=s3://{{ var.value.bootstrap_bucket }}/data_spark_on_emr.py"
+                // variable set: upload_data/jars/
+                "--src=s3://{{ var.value.sas_jars_bucket }}/spark-sas7bdat-3.0.0-s_2.12.jar",
+                "--dest=/usr/lib/spark/jars"
             ]
         }
     },

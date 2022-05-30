@@ -65,8 +65,6 @@ with DAG(DAG_ID,
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
         task_id='Create_Emr_Cluster',
-        aws_conn_id='aws_default',
-        emr_conn_id='aws_emr_default',
         job_flow_overrides=JOB_FLOW_OVERRIDES,
         region_name='us-east-2'
     )
@@ -75,24 +73,21 @@ with DAG(DAG_ID,
     add_steps = EmrAddStepsOperator(
         task_id='Add_EMR_Step',
         aws_conn_id='aws_default',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
-        cluster_states=['WAITING'],
-        steps=SPARK_STEP,
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
+        steps=''
     )
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
     wait_for_step = EmrStepSensor(
-        task_id='Wait_for_Step',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
-        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step") }}',
+        task_id='Add_Steps',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
+        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step", key="return_value")[0] }}',
         aws_conn_id='aws_default',
-        target_states=['COMPLETED'],
-        failed_states=['FAILED'],
     )
 
-    EmrTerminateJobFlowOperator(
+    terminal_job = EmrTerminateJobFlowOperator(
         task_id='terminal_emr_cluster',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create EMR Job Flow") }}',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster") }}',
         aws_conn_id='aws_default',
     )
 
