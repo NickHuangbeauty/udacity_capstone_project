@@ -109,7 +109,8 @@ with DAG(DAG_ID,
         task_id='upload_spark_step_json_file_from_local_to_s3',
         s3_bucket=BUCKET_NAME,
         s3_key=SPARK_STEPS_AWS_S3_KEY,
-        filename_dict=dict_spark_file_info
+        filename_dict=dict_spark_file_info,
+        aws_conn_id=AWS_CONN_ID
     )
     # Check if json files are uploaded from local to AWS S3 or not!
     how_to_do_next_step = BranchPythonOperator(
@@ -157,7 +158,5 @@ with DAG(DAG_ID,
     no_reachable = DummyOperator(task_id='No_Reachable_Step')
 
     # upload_job_config_json_file >> upload_spark_step_json_file >> how_to_do_next_step >> start >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
-    start >> [upload_job_config_json_file >>
-              upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> end
-    start >> [upload_job_config_json_file >>
-              upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> no_reachable
+    start >> [upload_job_config_json_file, upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> end
+    start >> [upload_job_config_json_file, upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> no_reachable
