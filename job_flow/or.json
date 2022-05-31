@@ -11,7 +11,7 @@
     {
       "Name": "bootstrap_emr",
       "ScriptBootstrapAction": {
-        "Path": "s3://{{ var.value.Bootstrap_Bucket }}/bootstrap.sh"
+        "Path": "s3://{{ var.value.bootstrap_bucket }}/bootstrap.sh"
       } // Set bootstrap_bucket in Airflow variables
     }
   ],
@@ -29,8 +29,8 @@
     }
   ],
   "Instances": {
-    "Ec2KeyName": "{{ var.value.Ec2_Key_Name }}", // Set Ec2KeyName and Ec2SubnetId in Airflow variables // Check Ec2KeyName and Ec2SubnetId
-    "Ec2SubnetId": "{{ var.value.Ec2_Subnet_Id }}",
+    "Ec2KeyName": "my-key-pair", // Set Ec2KeyName and Ec2SubnetId in Airflow variables // Check Ec2KeyName and Ec2SubnetId
+    "Ec2SubnetId": "subnet-ec57ca94",
     "InstanceGroups": [
       {
         "InstanceCount": 1,
@@ -50,10 +50,10 @@
     "KeepJobFlowAliveWhenNoSteps": "True",
     "TerminationProtected": "False"
   },
-  "JobFlowRole": "{{ var.value.Job_Flow_Role }}", // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole" // Set JobFlowRole and ServiceRole in Airflow variables
-  "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
+  "JobFlowRole": "{{ var.value.JobFlowRole }}", // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole" // Set JobFlowRole and ServiceRole in Airflow variables
+  "LogUri": "s3://{{ var.value.log_bucket }}/emrlogs/",
   "Name": "udacity_capstone_spark_on_emr",
   "ReleaseLabel": "emr-5.29.0",
-  "ServiceRole": "{{ var.value.Service_Role }}",
+  "ServiceRole": "{{ var.value.ServiceRole }}",
   "VisibleToAllUsers": "True"
 }

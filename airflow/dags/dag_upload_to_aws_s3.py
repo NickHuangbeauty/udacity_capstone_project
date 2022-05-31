@@ -88,7 +88,8 @@ with DAG(DAG_ID,
             filename=EMR_FILEPATH,
             dest_key=UPLOAD_ETL_EMR_S3_KEY,
             dest_bucket=DEST_BUCKET,
-            replace=True
+            replace=True,
+            aws_conn_id='aws_conn'
         )
 
         logging.info("Completely to upload files to aws s3: data_spark_on_emr")
@@ -102,7 +103,8 @@ with DAG(DAG_ID,
             filename=SAS_JARS_FILEPATH,
             dest_key=UPLOAD_SAS_JARS_S3_KEY,
             dest_bucket=DEST_BUCKET,
-            replace=True
+            replace=True,
+            aws_conn_id='aws_conn'
         )
 
         logging.info("Completely to upload files to aws s3: sas jars")
@@ -116,7 +118,8 @@ with DAG(DAG_ID,
                 filename=each_filepath[2],
                 dest_key=each_filepath[1],
                 dest_bucket=DEST_BUCKET,
-                replace=True
+                replace=True,
+                aws_conn_id='aws_conn'
             )
 
     end = DummyOperator(

@@ -15,7 +15,7 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from operators import UploadJsonFileFromLocalToS3
 from airflow.operators.python import BranchPythonOperator
 
-AWS_CONN_ID = 'aws_credentials'
+AWS_CONN_ID = 'aws_conn'
 
 JOB_FLOW_AWS_S3_KEY = 'job_flow/job_flow_overrides.json'
 SPARK_STEPS_AWS_S3_KEY = 'aws_emr_steps/aws_emr_steps.json'
@@ -39,8 +39,6 @@ DEFAULT_ARGS = {
 }
 
 # Get Job Flow and Spark Step Json files from AWS S3
-
-
 def get_job_flow(s3_key, bucket_name):
     """
     Purpose:
@@ -98,12 +96,13 @@ with DAG(DAG_ID,
     start = DummyOperator(task_id='Start')
 
     # ***** Upland Job flow and Spark Step json files from local to AWS S3 *****
-    # TODO: Using Python Operations and get Xcom to upload json when completed upload files then get return_value go next steps(EmrCreateJobFlowOperator)
+    # Using Python Operations and get Xcom to upload json when completed upload files then get return_value go next steps(EmrCreateJobFlowOperator)
     upload_job_config_json_file = UploadJsonFileFromLocalToS3(
         task_id='upload_job_config_json_file_from_local_to_s3',
         s3_bucket=BUCKET_NAME,
         s3_key=JOB_FLOW_AWS_S3_KEY,
-        filename_dict=dict_job_file_info
+        filename_dict=dict_job_file_info,
+        aws_conn_id=AWS_CONN_ID
     )
 
     upload_spark_step_json_file = UploadJsonFileFromLocalToS3(
@@ -120,7 +119,7 @@ with DAG(DAG_ID,
 
     start_emr_step = DummyOperator(task_id='Start_to_EMR_Step')
 
-    # TODO: Check create AWS EMR all connection and config for using AWS boto3 API to create EMR instances.
+    # Check create AWS EMR all connection and config for using AWS boto3 API to create EMR instances.
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
