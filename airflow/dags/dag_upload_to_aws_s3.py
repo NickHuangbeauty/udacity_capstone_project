@@ -95,7 +95,7 @@ with DAG(DAG_ID,
 
         logging.info("Start to upload files to aws s3: sas jars")
 
-        # Upload data_spark_on_emr.py from local to aws s3
+        # Upload sas jars file from local to aws s3
         upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
             task_id='upload_sas_jars_file_from_local_to_s3',
             # local target file path
