@@ -54,7 +54,7 @@ DAG_ID = f"Step1_{os.path.basename(__file__).replace('.py', '')}"
 
 # Default args for DAG
 DEFAULT_ARGS = {
-    'owner': 'udacity',
+    'owner': 'OneForALL',
     'depends_on_past': False,
     'start_date': datetime(2019, 1, 12),
     'retries': 3,
