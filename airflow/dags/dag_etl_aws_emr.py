@@ -20,14 +20,7 @@ AWS_CONN_ID = 'aws_conn'
 JOB_FLOW_AWS_S3_KEY = 'job_flow/job_flow_overrides.json'
 SPARK_STEPS_AWS_S3_KEY = 'aws_emr_steps/aws_emr_steps.json'
 BUCKET_NAME = 'mydatapool'
-JOB_FLOW_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/job_flow/'
-dict_job_file_info = dict([os.path.join(root, file_), file_.split(".")[0]]for root, dirs, files in os.walk(
-    JOB_FLOW_FILE_PATH) for file_ in files if file_.endswith('.json'))
 
-
-SPARK_STEP_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/'
-dict_spark_file_info = dict([os.path.join(root, file_), file_.split(".")[0]] for root, dirs, files in os.walk(
-    SPARK_STEP_FILE_PATH) for file_ in files if file_.endswith('.json'))
 
 DEFAULT_ARGS = {
     'owner': 'OneForALL',
@@ -75,6 +68,102 @@ def how_to_do_branch(**context) -> str:
             return 'failed upload files'
 
 
+# ******* SPARK_STEPS & JobFlow *******
+SPARK_STEPS = [
+    {
+        "ActionOnFailure": "CONTINUE",
+        "HadoopJarStep": {
+            "Args": [
+                "s3-dist-cp",
+                "--src=s3://{{ var.value.SAS_Jars_Bucket }}/spark-sas7bdat-3.0.0-s_2.12.jar",
+                "--dest=/usr/lib/spark/jars"
+            ],
+            "Jar": "command-runner.jar"
+        },
+        "Name": "Upload sas jars file from local to aws s3"
+    },
+    {
+        "ActionOnFailure": "CANCEL_AND_WAIT",
+        "HadoopJarStep": {
+            "Args": [
+                "Spark-Submit",
+                "--master",
+                "yarn",
+                "--deploy-mode",
+                "cluster",
+                "--name",
+                "data_spark_on_emr",
+                "s3://{{ var.value.Bootstrap_Bucket }}/data_spark_on_emr.py"
+            ],
+            "Jar": "command-runner.jar"
+        },
+        "Name": "For Dealing with data and analytics using Spark on AWS EMR"
+    }
+]
+
+JOB_FLOW_OVERRIDES = {
+    "Applications": [
+        {
+            "Name": "Hadoop"
+        },
+        {
+            "Name": "Spark"
+        }
+    ],
+    "BootstrapActions": [
+        {
+            "Name": "bootstrap_emr",
+            "ScriptBootstrapAction": {
+                "Path": "s3://{{ var.value.Bootstrap_Bucket }}/bootstrap.sh"
+            }
+        }
+    ],
+    "Configurations": [
+        {
+            "Classification": "spark-env",
+            "Configurations": [
+                {
+                    "Classification": "export",
+                    "Properties": {
+                        "PYSPARK_PYTHON": "/usr/bin/python3"
+                    }
+                }
+            ]
+        }
+    ],
+    "Instances": {
+        "Ec2KeyName": "{{ var.value.Ec2_Key_Name }}",
+        "Ec2SubnetId": "{{ var.value.Ec2_Subnet_Id }}",
+        "InstanceGroups": [
+            {
+                "InstanceCount": 1,
+                "InstanceRole": "MASTER",
+                "InstanceType": "m5.xlarge",
+                "Market": "ON_DEMAND",
+                "Name": "Primary_Node"
+            },
+            {
+                "InstanceCount": 2,
+                "InstanceRole": "CORE",
+                "InstanceType": "m5.xlarge",
+                "Market": "ON_DEMAND",
+                "Name": "Core_Node_2"
+            }
+        ],
+        "KeepJobFlowAliveWhenNoSteps": False,
+        "TerminationProtected": False
+    },
+    "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
+    "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
+    "Name": "Udacity_Capstone_Spark_On_EMR",
+    "ReleaseLabel": "emr-5.29.0",
+    "ServiceRole": "{{ var.value.Service_Role }}",
+    "VisibleToAllUsers": True
+}
+
+# *************************************
+
+
 DAG_ID = f"Step2_{os.path.basename(__file__).replace('.py', '')}"
 
 logging.info("Starting DAG_ID: {DAG_ID}")
@@ -95,23 +184,7 @@ with DAG(DAG_ID,
 
     start = DummyOperator(task_id='Start')
 
-    # ***** Upland Job flow and Spark Step json files from local to AWS S3 *****
-    # Using Python Operations and get Xcom to upload json when completed upload files then get return_value go next steps(EmrCreateJobFlowOperator)
-    upload_job_config_json_file = UploadJsonFileFromLocalToS3(
-        task_id='upload_job_config_json_file_from_local_to_s3',
-        s3_bucket=BUCKET_NAME,
-        s3_key=JOB_FLOW_AWS_S3_KEY,
-        filename_dict=dict_job_file_info,
-        aws_conn_id=AWS_CONN_ID
-    )
 
-    upload_spark_step_json_file = UploadJsonFileFromLocalToS3(
-        task_id='upload_spark_step_json_file_from_local_to_s3',
-        s3_bucket=BUCKET_NAME,
-        s3_key=SPARK_STEPS_AWS_S3_KEY,
-        filename_dict=dict_spark_file_info,
-        aws_conn_id=AWS_CONN_ID
-    )
     # Check if json files are uploaded from local to AWS S3 or not!
     how_to_do_next_step = BranchPythonOperator(
         task_id='how_to_do_branch',
@@ -125,8 +198,7 @@ with DAG(DAG_ID,
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
         task_id='Create_Emr_Cluster',
-        job_flow_overrides=get_job_flow(s3_key=JOB_FLOW_AWS_S3_KEY,
-                                        bucket_name=BUCKET_NAME),
+        job_flow_overrides=JOB_FLOW_OVERRIDES,
         region_name='us-east-2'
     )
 
@@ -135,8 +207,7 @@ with DAG(DAG_ID,
         task_id='Add_EMR_Step',
         aws_conn_id='aws_default',
         job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
-        steps=get_job_flow(s3_key=SPARK_STEPS_AWS_S3_KEY,
-                           bucket_name=BUCKET_NAME)
+        steps=SPARK_STEPS
     )
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
@@ -158,5 +229,5 @@ with DAG(DAG_ID,
     no_reachable = DummyOperator(task_id='No_Reachable_Step')
 
     # upload_job_config_json_file >> upload_spark_step_json_file >> how_to_do_next_step >> start >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
-    start >> [upload_job_config_json_file, upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> end
-    start >> [upload_job_config_json_file, upload_spark_step_json_file] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> no_reachable
+    start >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> end
+    start >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> no_reachable
