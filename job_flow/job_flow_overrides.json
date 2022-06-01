@@ -12,7 +12,7 @@
       "Name": "bootstrap_emr",
       "ScriptBootstrapAction": {
         "Path": "s3://{{ var.value.Bootstrap_Bucket }}/bootstrap.sh"
-      } // Set bootstrap_bucket in Airflow variables
+      }
     }
   ],
   "Configurations": [
@@ -22,14 +22,14 @@
         {
           "Classification": "export",
           "Properties": {
-            "PYSPARK_PYTHON": "/usr/bin/python3" //Amazon EMR release versions 5.20.0 and later: Python 3.6 is installed on the cluster instances. For 5.20.0-5.29.0, Python 2.7 is the system default. For Amazon EMR version 5.30.0 and later, Python 3 is the system default.
+            "PYSPARK_PYTHON": "/usr/bin/python3"
           }
         }
       ]
     }
   ],
   "Instances": {
-    "Ec2KeyName": "{{ var.value.Ec2_Key_Name }}", // Set Ec2KeyName and Ec2SubnetId in Airflow variables // Check Ec2KeyName and Ec2SubnetId
+    "Ec2KeyName": "{{ var.value.Ec2_Key_Name }}",
     "Ec2SubnetId": "{{ var.value.Ec2_Subnet_Id }}",
     "InstanceGroups": [
       {
@@ -47,13 +47,13 @@
         "Name": "Core_Node_2"
       }
     ],
-    "KeepJobFlowAliveWhenNoSteps": "True",
-    "TerminationProtected": "False"
+    "KeepJobFlowAliveWhenNoSteps": false,
+    "TerminationProtected": false
   },
-  "JobFlowRole": "{{ var.value.Job_Flow_Role }}", // Use AWS CLI for searching JobFlowRole and ServiceRole: >> aws iam list-roles | grep "EMR_DefaultRole\|EMR_EC2_DefaultRole" // Set JobFlowRole and ServiceRole in Airflow variables
+  "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
   "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
-  "Name": "udacity_capstone_spark_on_emr",
+  "Name": "Udacity_Capstone_Spark_On_EMR",
   "ReleaseLabel": "emr-5.29.0",
   "ServiceRole": "{{ var.value.Service_Role }}",
-  "VisibleToAllUsers": "True"
+  "VisibleToAllUsers": true
 }

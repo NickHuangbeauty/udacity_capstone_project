@@ -4,13 +4,9 @@
         "HadoopJarStep": {
             "Args": [
                 "s3-dist-cp",
-                // variable set: upload_data/jars/
                 "--src=s3://{{ var.value.SAS_Jars_Bucket }}/spark-sas7bdat-3.0.0-s_2.12.jar",
                 "--dest=/usr/lib/spark/jars"
             ],
-            // Set bootstrap_bucket in Airflow variables
-            // Upload data_spark_on_emr.py from local to AWS S3
-            // Using spark-summit to execute the data_spark_on_emr python file for dealing with data.
             "Jar": "command-runner.jar"
         },
         "Name": "Upload sas jars file from local to aws s3"
@@ -28,8 +24,6 @@
                 "data_spark_on_emr",
                 "s3://{{ var.value.Bootstrap_Bucket }}/data_spark_on_emr.py"
             ],
-            // Set bootstrap_bucket in Airflow variables
-            // Using spark-summit to execute the data_spark_on_emr python file for dealing with data.
             "Jar": "command-runner.jar"
         },
         "Name": "For Dealing with data and analytics using Spark on AWS EMR"
