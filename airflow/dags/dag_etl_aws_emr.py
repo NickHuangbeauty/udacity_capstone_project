@@ -167,7 +167,7 @@ JOB_FLOW_OVERRIDES = {
 # *************************************
 
 
-DAG_ID = f"Step2_{os.path.basename(__file__).replace('.py', '')}"
+DAG_ID = f"Main_ETL_Process_{os.path.basename(__file__).replace('.py', '')}"
 
 logging.info("Starting DAG_ID: {DAG_ID}")
 

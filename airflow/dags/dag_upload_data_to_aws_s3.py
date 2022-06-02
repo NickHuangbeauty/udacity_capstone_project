@@ -56,7 +56,7 @@ SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/ja
 
 # Start: DAG
 # This file name.
-DAG_ID = f"Step1_{os.path.basename(__file__).replace('.py', '')}"
+DAG_ID = f"{os.path.basename(__file__).replace('.py', '')}"
 
 # Default args for DAG
 DEFAULT_ARGS = {
