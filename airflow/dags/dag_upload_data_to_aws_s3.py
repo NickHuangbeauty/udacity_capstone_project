@@ -95,7 +95,8 @@ with DAG(DAG_ID,
             dest_key=UPLOAD_SAS_JARS_S3_KEY,
             dest_bucket=DEST_BUCKET,
             replace=True,
-            aws_conn_id=AWS_CONN_ID
+            aws_conn_id=AWS_CONN_ID,
+            do_xcom_push=True
         )
 
         logging.info("Completely to upload files to aws s3: sas jars")
@@ -110,7 +111,8 @@ with DAG(DAG_ID,
                 dest_key=each_filepath[1],
                 dest_bucket=DEST_BUCKET,
                 replace=True,
-                aws_conn_id=AWS_CONN_ID
+                aws_conn_id=AWS_CONN_ID,
+                do_xcom_push=True
             )
 
     end = DummyOperator(task_id='Completely_load_data_and_emr_file_from_local_to_aws_s3')

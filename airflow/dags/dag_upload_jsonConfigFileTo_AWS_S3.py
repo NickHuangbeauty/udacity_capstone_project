@@ -72,8 +72,6 @@ with DAG(DAG_ID,
         # Upload Job flow file from local to aws s3
         upload_job_flow_file_from_local_to_s3 = UploadJsonFileFromLocalToS3(
             task_id='upload_job_flow_file_from_local_to_s3',
-            # local target file path
-            filename=JOB_FLOW_FILE_PATH,
             s3_key=JOB_FLOW_AWS_S3_KEY,
             s3_bucket=DEST_BUCKET,
             filename_dict=dict_job_file_info,
@@ -84,10 +82,8 @@ with DAG(DAG_ID,
         # Upload Spark Step file from local to aws s3
         upload_spark_step_file_from_local_to_s3 = UploadJsonFileFromLocalToS3(
             task_id='upload_spark_step_file_from_local_to_s3',
-            # local target file path
-            filename=SPARK_STEP_FILE_PATH,
-            dest_key=SPARK_STEPS_AWS_S3_KEY,
-            dest_bucket=DEST_BUCKET,
+            s3_key=SPARK_STEPS_AWS_S3_KEY,
+            s3_bucket=DEST_BUCKET,
             filename_dict=dict_spark_file_info,
             aws_conn_id=AWS_CONN_ID,
             replace=True
