@@ -24,12 +24,14 @@ class UploadJsonFileFromLocalToS3(BaseOperator):
                  s3_key: str = '',
                  filename_dict: dict = '',
                  aws_conn_id: str = '',
+                 replace: bool = True,
                  **kwargs):
         super().__init__(**kwargs)
         self.s3_bucket = s3_bucket
         self.s3_key = s3_key
         self.filename_dict = filename_dict
         self.aws_conn_id = aws_conn_id
+        self.replace = replace
 
     def execute(self, **context) -> None:
         """
@@ -44,16 +46,21 @@ class UploadJsonFileFromLocalToS3(BaseOperator):
         self.upload_data_from_local_to_s3(**context)
 
     def upload_data_from_local_to_s3(self, **context) -> None:
+        """
+        Purpose:
+            Upload files from local to aws s3 after access Aws Service.
+            To push data information to Xcom for using next step.
+        """
         hook = S3Hook(aws_conn_id=self.aws_conn_id)
 
         ti = context['task_instance']
 
         for file_path, filename in self.filename_dict.items():
             ti.xcom_push(key=filename, value=file_path)
-
+            # param filename: path to the file to load.
             hook.load_file(filename=file_path,
                            key=self.s3_key,
                            bucket_name=self.s3_bucket,
-                           replace=True)
+                           replace=self.replace)
 
             self.log.info(f"Uploaded: {filename}")
