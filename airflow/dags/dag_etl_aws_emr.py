@@ -218,7 +218,7 @@ with DAG(DAG_ID,
     # Trigger 3: for upland source and sas jars data from local to aws s3
     trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_source_data_step',
-        trigger_dag_id='dag_upload_emr_script',
+        trigger_dag_id='dag_upload_data_to_aws_s3',
         execution_date='{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
