@@ -245,11 +245,11 @@ with DAG(DAG_ID,
         aws_conn_id=AWS_CONN_ID
     )
 
-    # terminal_job = EmrTerminateJobFlowOperator(
-    #     task_id='terminal_emr_cluster',
-    #     job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")) }}',
-    #     aws_conn_id=AWS_CONN_ID
-    # )
+    terminal_job = EmrTerminateJobFlowOperator(
+        task_id='terminal_emr_cluster',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")) }}',
+        aws_conn_id=AWS_CONN_ID
+    )
 
     end = DummyOperator(task_id='End_to_Add_EMR_Step')
 
