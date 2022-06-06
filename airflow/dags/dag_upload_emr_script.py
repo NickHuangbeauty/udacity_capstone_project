@@ -49,19 +49,19 @@ DEFAULT_ARGS = {
 logging.info(f"Starting DAG_ID: {DAG_ID}")
 
 with DAG(DAG_ID,
-         description="upload_etl_file_to_aws_s3",
+         description="upload_emr_etl_script_to_aws_s3",
          default_args=DEFAULT_ARGS,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
          schedule_interval='0 * * * *',
-         tags=['Step3_upload_etl_file_to_aws_s3']) as dag:
+         tags=['Step3_upload_emr_etl_script_to_aws_s3']) as dag:
 
-    start = DummyOperator(task_id='Start_upload_ETLdata_from_local_to_aws_s3')
+    start = DummyOperator(task_id='Start_upload_emr_script_from_local_to_aws_s3')
 
 # # ***** Upland ETL_EMR files from local to AWS S3 *****
-    upload_job_config_json_file = UploadJsonFileFromLocalToS3(
-        task_id='upload_etl_emr_file_from_local_to_s3',
+    upload_emr_script_file = UploadJsonFileFromLocalToS3(
+        task_id='upload_etl_emr_script_from_local_to_s3',
         s3_bucket=DEST_BUCKET,
         s3_key=UPLOAD_ETL_EMR_S3_KEY,
         filename_dict=dict_etl_file_info,

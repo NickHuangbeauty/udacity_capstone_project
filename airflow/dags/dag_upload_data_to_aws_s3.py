@@ -72,15 +72,15 @@ DEFAULT_ARGS = {
 logging.info(f"Starting DAG_ID: {DAG_ID}")
 
 with DAG(DAG_ID,
-         description="upload_to_aws_s3",
+         description="upload_sas_jars_and_source_data_to_aws_s3",
          default_args=DEFAULT_ARGS,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
          schedule_interval='0 * * * *',
-         tags=['Step1_upload_to_aws_s3']) as dag:
+         tags=['upload, sas_jars, source_data']) as dag:
 
-    start = DummyOperator(task_id='Start_load_data_from_local_to_aws_s3')
+    start = DummyOperator(task_id='Start_load_jars_and_data_from_local_to_aws_s3')
 
     # Task Group
     with TaskGroup(group_id='upload_to_aws_s3') as task_group_upload_to_aws_s3:
@@ -106,7 +106,7 @@ with DAG(DAG_ID,
             logging.info(f"Uploading: {each_filepath[0]}")
 
             upload_data_from_local_to_s3 = LocalFilesystemToS3Operator(
-                task_id=f"upload_to_s3_{each_filepath[0]}",
+                task_id=f"upload_{each_filepath[0]}_from_local_to_s3",
                 filename=each_filepath[2],
                 dest_key=each_filepath[1],
                 dest_bucket=DEST_BUCKET,
@@ -115,7 +115,7 @@ with DAG(DAG_ID,
                 do_xcom_push=True
             )
 
-    end = DummyOperator(task_id='Completely_load_data_and_emr_file_from_local_to_aws_s3')
+    end = DummyOperator(task_id='Completely_upload_sas_jars_and_source_data_from_local_to_aws_s3')
 
     # schedule for this dag processes
     start >> task_group_upload_to_aws_s3 >> end

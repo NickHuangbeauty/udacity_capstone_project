@@ -50,25 +50,25 @@ def get_json_file(s3_key, bucket_name):
     return json.loads(file_content)
 
 
-def how_to_do_branch(**context) -> str:
-    # TODO: Dealing with is xcom_pull!!
-    """
-    Purpose:
-        Check json files are available to upload to aws s3.
+# def how_to_do_branch(**context) -> str:
+#     # TODO: Dealing with is xcom_pull!!
+#     """
+#     Purpose:
+#         Check json files are available to upload to aws s3.
 
-    Returns:
-        str: files are success uploaded to s3: return completed upload files
-             files are not success uploaded to s3: return failed upload files
-    """
-    fetched_upload_filename = context['task_instance'].xcom_pull(key=['job_flow_overrides', 'aws_emr_steps'],
-                                                                 task_id=['upload_job_config_json_file_from_local_to_s3',
-                                                                          'upload_spark_step_json_file_from_local_to_s3'])
-    for filename in range(len(fetched_upload_filename)):
-        if fetched_upload_filename[filename] in ['job_flow_overrides', 'aws_emr_steps']:
+#     Returns:
+#         str: files are success uploaded to s3: return completed upload files
+#              files are not success uploaded to s3: return failed upload files
+#     """
+#     fetched_upload_filename = context['task_instance'].xcom_pull(key=['job_flow_overrides', 'aws_emr_steps'],
+#                                                                  task_id=['upload_job_config_json_file_from_local_to_s3',
+#                                                                           'upload_spark_step_json_file_from_local_to_s3'])
+#     for filename in range(len(fetched_upload_filename)):
+#         if fetched_upload_filename[filename] in ['job_flow_overrides', 'aws_emr_steps']:
 
-            return 'completed upload files'
-        else:
-            return 'failed upload files'
+#             return 'completed upload files'
+#         else:
+#             return 'failed upload files'
 
 
 # ******* SPARK_STEPS & JobFlow *******
@@ -193,12 +193,10 @@ with DAG(DAG_ID,
         python_callable=how_to_do_branch,
     )
 
-    start_emr_step = DummyOperator(task_id='Start_to_EMR_Step')
-
     # Trigger 1: for upland etl_emr file from local to aws s3
     trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_etl_emr_step',
-        trigger_dag_id='dag_upload_erl_operators',
+        trigger_dag_id='upload_etl_emr_script_from_local_to_s3',
         execution_date= '{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
@@ -216,7 +214,7 @@ with DAG(DAG_ID,
     # Trigger 3: for upland source and sas jars data from local to aws s3
     trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_source_data_step',
-        trigger_dag_id='dag_upload_data_to_aws_s3',
+        trigger_dag_id='task_group_upload_to_aws_s3.upload_sas_jars_file_from_local_to_s3',
         execution_date='{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
@@ -256,6 +254,8 @@ with DAG(DAG_ID,
     no_reachable = DummyOperator(task_id='No_Reachable_Step')
 
 
-    start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> start_emr_step >> create_job_flow >> add_steps >> wait_for_step >> end
+    # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
 
-    start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
+    # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
+
+    start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
