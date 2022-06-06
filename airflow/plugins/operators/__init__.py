@@ -1,5 +1,5 @@
-from operators.upload_json_to_aws_s3 import UploadJsonFileFromLocalToS3
+from operators.upload_files_to_aws_s3 import UploadFilesFromLocalToS3
 
 __all__ = [
-    'UploadJsonFileFromLocalToS3'
+    'UploadFilesFromLocalToS3'
 ]

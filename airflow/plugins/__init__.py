@@ -8,5 +8,5 @@ import operators
 class OneForALLPlugin(AirflowPlugin):
     name = 'OneForALL_Plugin'
     operators = [
-        operators.UploadJsonFileFromLocalToS3,
+        operators.UploadFilesFromLocalToS3,
     ]

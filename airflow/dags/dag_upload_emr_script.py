@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from airflow.models import DAG
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
-from operators import UploadJsonFileFromLocalToS3
+from operators import UploadFilesFromLocalToS3
 
 # https://airflow.apache.org/docs/apache-airflow-providers-amazon/3.3.0/_modules/airflow/providers/amazon/aws/transfers/local_to_s3.html
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
@@ -60,7 +60,7 @@ with DAG(DAG_ID,
     start = DummyOperator(task_id='Start_upload_emr_script_from_local_to_aws_s3')
 
 # # ***** Upland ETL_EMR files from local to AWS S3 *****
-    upload_emr_script_file = UploadJsonFileFromLocalToS3(
+    upload_emr_script_file = UploadFilesFromLocalToS3(
         task_id='upload_etl_emr_script_from_local_to_s3',
         s3_bucket=DEST_BUCKET,
         s3_key=UPLOAD_ETL_EMR_S3_KEY,

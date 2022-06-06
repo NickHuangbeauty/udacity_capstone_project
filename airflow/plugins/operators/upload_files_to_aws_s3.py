@@ -2,15 +2,15 @@ from airflow.models import BaseOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 
-class UploadJsonFileFromLocalToS3(BaseOperator):
+class UploadFilesFromLocalToS3(BaseOperator):
     """
     Purpose:
-        1. Upload json files from local to aws s3 after access Aws Service.
+        1. Upload files from local to aws s3 after access Aws Service.
     :param s3_bucket:              s3 bucket name
     :type s3_bucket                str
     :param s3_key                  s3 key name (is json file saved in s3 bucket location name)
     :type s3_key                   str
-    :param filename_dict           json file path and json filename
+    :param filename_dict           files path and json filename
     :type filename_dict            dictionary
     """
 
@@ -36,7 +36,7 @@ class UploadJsonFileFromLocalToS3(BaseOperator):
     def execute(self, **context) -> None:
         """
         Purpose:
-            Upload json files from local to aws s3 after access Aws Service.
+            Upload files from local to aws s3 after access Aws Service.
 
         :return: None
         """
