@@ -12,7 +12,7 @@ from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreate
 from airflow.providers.amazon.aws.operators.emr_terminate_job_flow import EmrTerminateJobFlowOperator
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from operators import UploadJsonFileFromLocalToS3
+from operators import UploadFilesFromLocalToS3
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.state import State

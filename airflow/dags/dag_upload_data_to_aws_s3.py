@@ -7,8 +7,7 @@ from datetime import datetime, timedelta
 from airflow.models import DAG
 from airflow.utils.task_group import TaskGroup
 from airflow.operators.dummy_operator import DummyOperator
-from operators import UploadJsonFileFromLocalToS3
-from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from operators import UploadFilesFromLocalToS3
 
 # https://airflow.apache.org/docs/apache-airflow-providers-amazon/3.3.0/_modules/airflow/providers/amazon/aws/transfers/local_to_s3.html
 from airflow.providers.amazon.aws.transfers.local_to_s3 import LocalFilesystemToS3Operator
@@ -46,12 +45,12 @@ each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
-# ******************** Access emr file by filepath ***********************
-EMR_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/aws_emr_steps/data_spark_on_emr.py'
-# ************************************************************************
 
 # ******************** Access sas jars file by filepath **********************
-SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
+# SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
+SAS_JARS_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/'
+dict_SAS_jars_info = dict([os.path.join(root, file_), file_.split(".")[0]]for root, dirs, files in os.walk(
+    SAS_JARS_FILE_PATH) for file_ in files if file_.endswith('.jar'))
 # ****************************************************************************
 
 # Start: DAG
@@ -88,31 +87,30 @@ with DAG(DAG_ID,
         logging.info("Start to upload files to aws s3: sas jars")
 
         # Upload sas jars file from local to aws s3
-        upload_emr_file_from_local_to_s3 = LocalFilesystemToS3Operator(
+        upload_sas_jars_file_from_local_to_s3 = UploadFilesFromLocalToS3(
             task_id='upload_sas_jars_file_from_local_to_s3',
-            # local target file path
-            filename=SAS_JARS_FILEPATH,
-            dest_key=UPLOAD_SAS_JARS_S3_KEY,
-            dest_bucket=DEST_BUCKET,
-            replace=True,
+            s3_bucket=DEST_BUCKET,
+            s3_key=UPLOAD_SAS_JARS_S3_KEY,
+            filename_dict=dict_SAS_jars_info,
             aws_conn_id=AWS_CONN_ID,
-            do_xcom_push=True
+            replace=True
         )
 
         logging.info("Completely to upload files to aws s3: sas jars")
 
+        logging.info("Start to upload files to aws s3: source data")
+
         for each_filepath in files_path:
             # Show log for each task
-            logging.info(f"Uploading: {each_filepath[0]}")
+            logging.info(f"Uploading: {each_filepath[0]}")  # usCitiesDemo.0 etc..
 
-            upload_data_from_local_to_s3 = LocalFilesystemToS3Operator(
-                task_id=f"upload_{each_filepath[0]}_from_local_to_s3",
-                filename=each_filepath[2],
-                dest_key=each_filepath[1],
-                dest_bucket=DEST_BUCKET,
-                replace=True,
+            upload_data_from_local_to_s3 = UploadFilesFromLocalToS3(
+                task_id=f"upload_{each_filepath[0].split('.')[0]}_from_local_to_s3",
+                s3_bucket=DEST_BUCKET,
+                s3_key=each_filepath[1],
+                filename_dict={each_filepath[2]: each_filepath[0].split('.')[0]},
                 aws_conn_id=AWS_CONN_ID,
-                do_xcom_push=True
+                replace=True
             )
 
     end = DummyOperator(task_id='Completely_upload_sas_jars_and_source_data_from_local_to_aws_s3')

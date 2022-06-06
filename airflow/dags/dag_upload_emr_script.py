@@ -57,7 +57,8 @@ with DAG(DAG_ID,
          schedule_interval='0 * * * *',
          tags=['step2, upload, emr_etl_script, aws_s3']) as dag:
 
-    start = DummyOperator(task_id='Start_upload_emr_script_from_local_to_aws_s3')
+    start = DummyOperator(
+        task_id='Start_upload_emr_script_from_local_to_aws_s3')
 
 # # ***** Upland ETL_EMR files from local to AWS S3 *****
     upload_emr_script_file = UploadFilesFromLocalToS3(
@@ -65,9 +66,11 @@ with DAG(DAG_ID,
         s3_bucket=DEST_BUCKET,
         s3_key=UPLOAD_ETL_EMR_S3_KEY,
         filename_dict=dict_etl_file_info,
-        aws_conn_id=AWS_CONN_ID
+        aws_conn_id=AWS_CONN_ID,
+        replace=True
     )
 
-    end = DummyOperator(task_id='Completely_upload_ETLdata_from_local_to_aws_s3')
+    end = DummyOperator(
+        task_id='Completely_upload_ETLdata_from_local_to_aws_s3')
 
     start >> upload_emr_script_file >> end
