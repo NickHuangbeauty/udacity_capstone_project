@@ -135,7 +135,7 @@ JOB_FLOW_OVERRIDES = {
         }
     ],
     "Instances": {
-        "Ec2KeyName": "{{ var.value.Ec2_Key_Name }}",
+        "Ec2KeyName": "{{ var.value.Ec2_Key_Pair_Name }}",
         "Ec2SubnetId": "{{ var.value.Ec2_Subnet_Id }}",
         "InstanceGroups": [
             {
@@ -226,7 +226,7 @@ with DAG(DAG_ID,
     create_job_flow = EmrCreateJobFlowOperator(
         task_id='Create_Emr_Cluster',
         job_flow_overrides=JOB_FLOW_OVERRIDES,
-        region_name='us-east-2'
+        region_name='us-west-2'
     )
 
     # An operator that adds steps to an existing EMR job_flow.
