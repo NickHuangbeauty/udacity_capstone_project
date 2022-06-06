@@ -55,7 +55,7 @@ with DAG(DAG_ID,
          catchup=False,
          #  Schedule once and only once
          schedule_interval='0 * * * *',
-         tags=['Step3_upload_emr_etl_script_to_aws_s3']) as dag:
+         tags=['step2, upload, emr_etl_script, aws_s3']) as dag:
 
     start = DummyOperator(task_id='Start_upload_emr_script_from_local_to_aws_s3')
 
@@ -70,4 +70,4 @@ with DAG(DAG_ID,
 
     end = DummyOperator(task_id='Completely_upload_ETLdata_from_local_to_aws_s3')
 
-    start >> upload_job_config_json_file >> end
+    start >> upload_emr_script_file >> end

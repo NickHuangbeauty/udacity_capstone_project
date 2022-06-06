@@ -78,7 +78,7 @@ with DAG(DAG_ID,
          catchup=False,
          #  Schedule once and only once
          schedule_interval='0 * * * *',
-         tags=['upload, sas_jars, source_data']) as dag:
+         tags=['step1, upload, sas_jars, source_data, aws_s3']) as dag:
 
     start = DummyOperator(task_id='Start_load_jars_and_data_from_local_to_aws_s3')
 

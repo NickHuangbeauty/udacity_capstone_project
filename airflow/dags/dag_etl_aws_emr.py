@@ -15,6 +15,8 @@ from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 from operators import UploadJsonFileFromLocalToS3
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
+from airflow.utils.state import State
+
 
 AWS_CONN_ID = 'aws_conn'
 
@@ -182,24 +184,26 @@ with DAG(DAG_ID,
          #  Schedule once and only once
          schedule_interval='0 * * * *',
          #  List of tags to help filtering DAGs in the UI.
-         tags=['Step2_aws_emr_to_s3, ETL, Pyspark, EMR']
+         tags=['main, aws_emr_to_s3, ETL, Pyspark, EMR']
          ) as dag:
 
     start = DummyOperator(task_id='Start')
 
     # Check if json files are uploaded from local to AWS S3 or not!
-    how_to_do_next_step = BranchPythonOperator(
-        task_id='how_to_do_branch',
-        python_callable=how_to_do_branch,
-    )
+    # how_to_do_next_step = BranchPythonOperator(
+    #     task_id='how_to_do_branch',
+    #     python_callable=how_to_do_branch,
+    # )
 
     # Trigger 1: for upland etl_emr file from local to aws s3
     trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_etl_emr_step',
-        trigger_dag_id='upload_etl_emr_script_from_local_to_s3',
+        trigger_dag_id='dag_upload_emr_script',
         execution_date= '{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
+        poke_interval=15,
+        allowed_states=[State.SUCCESS, State.RUNNING, State.FAILED]
     )
 
     # # Trigger 2: for upland Job flow and Spark Step from local to aws s3
@@ -214,10 +218,12 @@ with DAG(DAG_ID,
     # Trigger 3: for upland source and sas jars data from local to aws s3
     trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_source_data_step',
-        trigger_dag_id='task_group_upload_to_aws_s3.upload_sas_jars_file_from_local_to_s3',
+        trigger_dag_id='dag_upload_emr_script',
         execution_date='{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
+        poke_interval=15,
+        allowed_states=[State.SUCCESS, State.RUNNING, State.FAILED]
     )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
