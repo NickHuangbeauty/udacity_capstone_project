@@ -1,6 +1,10 @@
 .vscode
-./airflow/data/
+airflow/data
 airflow/airflow.cfg
 airflow/logs/
 airflow/webserver_config.py
-./dl.cfg
+dl.cfg
+airflow/airflow-webserver.pid
+airflow/airflow.db
+airflow/tests
+newrelic_agent.log
