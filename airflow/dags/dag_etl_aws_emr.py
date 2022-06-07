@@ -20,9 +20,15 @@ from airflow.utils.state import State
 
 AWS_CONN_ID = 'aws_conn'
 
-JOB_FLOW_AWS_S3_KEY = 'job_flow/job_flow_overrides.json'
-SPARK_STEPS_AWS_S3_KEY = 'aws_emr_steps/aws_emr_steps.json'
-BUCKET_NAME = 'mydatapool'
+
+# Airflow variables
+Bootstrap_Bucket = Variable.get('Bootstrap_Bucket')
+Ec2_Key_Pair_Name = Variable.get('Ec2_Key_Pair_Name')
+Ec2_Subnet_Id = Variable.get('Ec2_Subnet_Id')
+Job_Flow_Role = Variable.get('Job_Flow_Role')
+Log_Bucket = Variable.get('Log_Bucket')
+Data_Bucket = Variable.get('Data_Bucket')
+Service_Role = Variable.get('Service_Role')
 
 
 DEFAULT_ARGS = {
@@ -30,26 +36,26 @@ DEFAULT_ARGS = {
     'depends_on_past': True,
     'wait_for_downstream': True,
     'start_date': datetime(2022, 1, 12),
-    'retries': 3,
-    'retry_delay': timedelta(minutes=5),
+    'retries': 10,
+    'retry_delay': timedelta(minutes=3),
     'email_on_retry': False
 }
 
 # Get Job Flow and Spark Step Json files from AWS S3
-def get_json_file(s3_key, bucket_name):
-    """
-    Purpose:
-        Get the job flow from the variable.
-    :param s3_key:              s3 key
-    :type s3_key:               string
-    :param bucket_name:         AWS S3 bucket name
-    :type bucket_name:          string
-    return:                     json file as a object
-    """
-    hook = S3Hook(aws_conn_id=AWS_CONN_ID)
-    file_content = hook.get_key(key=s3_key, bucket_name=bucket_name)
-    file_content = file_content.get()['Body'].read().decode('utf-8')
-    return json.loads(file_content)
+# def get_json_file(s3_key, bucket_name):
+#     """
+#     Purpose:
+#         Get the job flow from the variable.
+#     :param s3_key:              s3 key
+#     :type s3_key:               string
+#     :param bucket_name:         AWS S3 bucket name
+#     :type bucket_name:          string
+#     return:                     json file as a object
+#     """
+#     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
+#     file_content = hook.get_key(key=s3_key, bucket_name=bucket_name)
+#     file_content = file_content.get()['Body'].read().decode('utf-8')
+#     return json.loads(file_content)
 
 
 # def how_to_do_branch(**context) -> str:
@@ -73,6 +79,7 @@ def get_json_file(s3_key, bucket_name):
 #             return 'failed upload files'
 
 
+
 # ******* SPARK_STEPS & JobFlow *******
 SPARK_STEPS = [
     {
@@ -80,7 +87,7 @@ SPARK_STEPS = [
         "HadoopJarStep": {
             "Args": [
                 "s3-dist-cp",
-                "--src=s3://{{ var.value.SAS_Jars_Bucket }}/spark-sas7bdat-3.0.0-s_2.12.jar",
+                "--src=s3://{{ var.value.Data_Bucket }}/upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar",
                 "--dest=/usr/lib/spark/jars"
             ],
             "Jar": "command-runner.jar"
@@ -98,7 +105,7 @@ SPARK_STEPS = [
                 "cluster",
                 "--name",
                 "data_spark_on_emr",
-                "s3://{{ var.value.Bootstrap_Bucket }}/data_spark_on_emr.py"
+                "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py"
             ],
             "Jar": "command-runner.jar"
         },
@@ -119,7 +126,7 @@ JOB_FLOW_OVERRIDES = {
         {
             "Name": "bootstrap_emr",
             "ScriptBootstrapAction": {
-                "Path": "s3://{{ var.value.Bootstrap_Bucket }}/bootstrap.sh"
+                "Path": "s3://{{ var.value.Bootstrap_Bucket }}/bootstrap_emr.sh"
             }
         }
     ],
@@ -143,14 +150,14 @@ JOB_FLOW_OVERRIDES = {
             {
                 "InstanceCount": 1,
                 "InstanceRole": "MASTER",
-                "InstanceType": "m5.xlarge",
+                "InstanceType": "m3.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Primary_Node"
             },
             {
                 "InstanceCount": 2,
                 "InstanceRole": "CORE",
-                "InstanceType": "m5.xlarge",
+                "InstanceType": "m3.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Core_Node_2"
             }
@@ -180,9 +187,8 @@ with DAG(DAG_ID,
          #  maximum number of active DAG runs, beyond this number of DAG runs in a running state, the scheduler won't create new active DAG runs
          max_active_runs=1,
          #  Perform scheduler catchup (or only run latest)? Defaults to True
+         schedule_interval=None,
          catchup=False,
-         #  Schedule once and only once
-         schedule_interval='0 * * * *',
          #  List of tags to help filtering DAGs in the UI.
          tags=['main, aws_emr_to_s3, ETL, Pyspark, EMR']
          ) as dag:
@@ -206,16 +212,7 @@ with DAG(DAG_ID,
         allowed_states=[State.SUCCESS, State.RUNNING, State.FAILED]
     )
 
-    # # Trigger 2: for upland Job flow and Spark Step from local to aws s3
-    # trigger_upload_json_files_to_s3 = TriggerDagRunOperator(
-    #     task_id='Trigger_upload_json_file_data_step',
-    #     trigger_dag_id='dag_upload_jsonConfigFileTo_AWS_S3',
-    #     execution_date='{{ ds }}',
-    #     reset_dag_run=True,
-    #     wait_for_completion=True,
-    # )
-
-    # Trigger 3: for upland source and sas jars data from local to aws s3
+    # Trigger 2: for upland source and sas jars data from local to aws s3
     trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
         task_id='Trigger_upload_source_data_step',
         trigger_dag_id='dag_upload_data_to_aws_s3',
@@ -236,7 +233,7 @@ with DAG(DAG_ID,
     # An operator that adds steps to an existing EMR job_flow.
     add_steps = EmrAddStepsOperator(
         task_id='Add_EMR_Step',
-        aws_conn_id='aws_default',
+        aws_conn_id=AWS_CONN_ID,
         job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
         steps=SPARK_STEPS
     )

@@ -24,6 +24,7 @@ os.environ['AWS_SECRET_ACCESS_KEY'] = config['default']['aws_secret_access_key']
 
 # Path to the S3 bucket
 UPLOAD_SAS_JARS_S3_KEY = 'upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
+UPLOAD_CONFIG_FILE_S3_KEY = 'config/dl.cfg'
 DEST_BUCKET = 'mydatapool'
 
 # ******************** Access each data by filepath **********************
@@ -36,7 +37,7 @@ filepath_all = [os.path.join(root, file) for root,
 files = [file_ for root, dirs, files in os.walk(filepath) for file_ in files]
 
 # s3 key where is saved upload of destination of aws s3 location
-s3_key_filename = [re.search(r'/data/*.*', each_filepath)[0]
+s3_key_filename = [re.search(r'data/*.*', each_filepath)[0]
                    for each_filepath in filepath_all]
 
 each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)
@@ -45,12 +46,15 @@ each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
-
 # ******************** Access sas jars file by filepath **********************
 # SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/spark-sas7bdat-3.0.0-s_2.12.jar'
 SAS_JARS_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/'
 dict_SAS_jars_info = dict([os.path.join(root, file_), file_.split(".")[0]]for root, dirs, files in os.walk(
     SAS_JARS_FILE_PATH) for file_ in files if file_.endswith('.jar'))
+# ****************************************************************************
+
+# ******************** Access config file by filepath **********************
+CONFIG_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/dl.cfg'
 # ****************************************************************************
 
 # Start: DAG
@@ -76,13 +80,26 @@ with DAG(DAG_ID,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
-         schedule_interval='0 * * * *',
+         schedule_interval=None,
          tags=['step1, upload, sas_jars, source_data, aws_s3']) as dag:
 
     start = DummyOperator(task_id='Start_load_jars_and_data_from_local_to_aws_s3')
 
     # Task Group
     with TaskGroup(group_id='upload_to_aws_s3') as task_group_upload_to_aws_s3:
+
+        logging.info("Start to upload files to aws s3: config file")
+
+        upload_config_file = LocalFilesystemToS3Operator(
+            task_id='upload_config_file',
+            filename=CONFIG_FILE_PATH,
+            dest_key=UPLOAD_CONFIG_FILE_S3_KEY,
+            dest_bucket=DEST_BUCKET,
+            aws_conn_id=AWS_CONN_ID,
+            replace=True
+        )
+
+        logging.info("Completely to upload files to aws s3: config file")
 
         logging.info("Start to upload files to aws s3: sas jars")
 
@@ -112,6 +129,8 @@ with DAG(DAG_ID,
                 aws_conn_id=AWS_CONN_ID,
                 replace=True
             )
+
+        logging.info("Completely to upload files to aws s3: source data")
 
     end = DummyOperator(task_id='Completely_upload_sas_jars_and_source_data_from_local_to_aws_s3')
 

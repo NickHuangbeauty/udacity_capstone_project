@@ -54,7 +54,7 @@ with DAG(DAG_ID,
          max_active_runs=1,
          catchup=False,
          #  Schedule once and only once
-         schedule_interval='0 * * * *',
+         schedule_interval=None,
          tags=['step2, upload, emr_etl_script, aws_s3']) as dag:
 
     start = DummyOperator(
