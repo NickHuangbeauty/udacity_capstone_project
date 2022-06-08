@@ -12,20 +12,26 @@ from pyspark.sql.types import (StructType,
                                DateType,
                                FloatType)
 
-# Access AWS Cloud configure
-config = configparser.ConfigParser()
-# config.read_file(open('s3://mydatapool/config/dl.cfg'))
+# ***** Access AWS Cloud configure ************
+# config = configparser.ConfigParser()
+# # config.read_file(open('s3://mydatapool/config/dl.cfg'))
+# config.read_file(open('/Users/oneforall_nick/workspace/Udacity_capstone_project/dl.cfg'))
 
-# TODO: For Testing purposes
-config.read_file(open('/Users/oneforall_nick/workspace/Udacity_capstone_project/dl.cfg'))
+# os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
+# os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
 
-os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
-os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
+# # Access data from AWS S3
+# SOURCE_S3_BUCKET = config['S3']['SOURCE_S3_BUCKET']
+# # Write data to AWS S3
+# DEST_S3_BUCKET = config['S3']['DEST_S3_BUCKET']
+# *********************************************
 
-# Access data from AWS S3
-SOURCE_S3_BUCKET = config['S3']['SOURCE_S3_BUCKET']
-# Write data to AWS S3
-DEST_S3_BUCKET = config['S3']['DEST_S3_BUCKET']
+# TODO ***** Local Testing configure ************
+SOURCE_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/'
+DEST_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/dest_data'
+
+# ***** Local Testing configure *****************
+
 
 
 def create_spark_session():
@@ -40,6 +46,8 @@ def create_spark_session():
         .appName("spark_emr_udactity") \
         .config("spark.jars.packages", "saurfang:spark-sas7bdat:3.0.0-s_2.12") \
         .getOrCreate()
+
+    spark.conf.set("spark.sql.shuffle.partitions", "5")
 
     logging.info("Spark information: {spark}")
 

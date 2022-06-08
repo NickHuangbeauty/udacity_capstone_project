@@ -229,18 +229,27 @@ with DAG(DAG_ID,
         steps=SPARK_STEPS
     )
 
+    # TODO: For Looking dive into xcom
+    logging.info(f"This is job flow id: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value') }}}}'")
+
     # Data Check for Data Quality using SparkSubmitOperator
     spark_submit_aws = SparkSubmitOperator(
-        
+        task_id='Spark_Submit_AWS',
     )
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
     wait_for_step = EmrStepSensor(
         task_id='Add_Steps',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
-        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step", key="return_value")[0] }}',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")[0] }}',
+        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step", key="return_value")[1] }}',
         aws_conn_id=AWS_CONN_ID
     )
+    # TODO: For Looking dive into xcom
+    logging.info(f"This is job flow id index 0: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value')[0] }}}}'")
+
+    # TODO: For Looking dive into xcom
+    logging.info(
+        f"This is job flow id index 1: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value')[1] }}}}'")
 
     terminal_job = EmrTerminateJobFlowOperator(
         task_id='terminal_emr_cluster',

@@ -8,3 +8,4 @@ airflow/airflow-webserver.pid
 airflow/airflow.db
 airflow/tests
 newrelic_agent.log
+practice.txt
