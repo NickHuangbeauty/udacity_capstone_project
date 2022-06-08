@@ -14,7 +14,10 @@ from pyspark.sql.types import (StructType,
 
 # Access AWS Cloud configure
 config = configparser.ConfigParser()
-config.read_file(open('s3://mydatapool/config/dl.cfg'))
+# config.read_file(open('s3://mydatapool/config/dl.cfg'))
+
+# TODO: For Testing purposes
+config.read_file(open('/Users/oneforall_nick/workspace/Udacity_capstone_project/dl.cfg'))
 
 os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
 os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]

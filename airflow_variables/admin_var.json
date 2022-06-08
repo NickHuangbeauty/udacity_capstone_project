@@ -5,5 +5,6 @@
     "Job_Flow_Role": "EMR_EC2_DefaultRole",
     "Log_Bucket": "mywsbucketbigdata",
     "Data_Bucket": "mydatapool",
-    "Service_Role": "EMR_DefaultRole"
+    "Service_Role": "EMR_DefaultRole",
+    "Postgres_conn_DB": "airflow_db"
 }

@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 from datetime import datetime, timedelta
 
@@ -11,11 +10,11 @@ from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOper
 from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreateJobFlowOperator
 from airflow.providers.amazon.aws.operators.emr_terminate_job_flow import EmrTerminateJobFlowOperator
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
-from airflow.providers.amazon.aws.hooks.s3 import S3Hook
-from operators import UploadFilesFromLocalToS3
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.state import State
+from airflow.providers.postgres.operators.postgres import PostgresOperator
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 
 AWS_CONN_ID = 'aws_conn'
@@ -29,6 +28,7 @@ Job_Flow_Role = Variable.get('Job_Flow_Role')
 Log_Bucket = Variable.get('Log_Bucket')
 Data_Bucket = Variable.get('Data_Bucket')
 Service_Role = Variable.get('Service_Role')
+Postgres_conn_DB = Variable.get('airflow_db')
 
 
 DEFAULT_ARGS = {
@@ -40,24 +40,6 @@ DEFAULT_ARGS = {
     'retry_delay': timedelta(minutes=3),
     'email_on_retry': False
 }
-
-# Get Job Flow and Spark Step Json files from AWS S3
-# def get_json_file(s3_key, bucket_name):
-#     """
-#     Purpose:
-#         Get the job flow from the variable.
-#     :param s3_key:              s3 key
-#     :type s3_key:               string
-#     :param bucket_name:         AWS S3 bucket name
-#     :type bucket_name:          string
-#     return:                     json file as a object
-#     """
-#     hook = S3Hook(aws_conn_id=AWS_CONN_ID)
-#     file_content = hook.get_key(key=s3_key, bucket_name=bucket_name)
-#     file_content = file_content.get()['Body'].read().decode('utf-8')
-#     return json.loads(file_content)
-
-
 # def how_to_do_branch(**context) -> str:
 #     # TODO: Dealing with is xcom_pull!!
 #     """
@@ -98,11 +80,13 @@ SPARK_STEPS = [
         "ActionOnFailure": "CANCEL_AND_WAIT",
         "HadoopJarStep": {
             "Args": [
-                "Spark-Submit",
+                "spark-submit",
                 "--master",
                 "yarn",
                 "--deploy-mode",
                 "cluster",
+                "--conf",
+                "spark.yarn.submit.waitAppCompletion=true"
                 "--name",
                 "data_spark_on_emr",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py"
@@ -186,12 +170,19 @@ with DAG(DAG_ID,
          default_args=DEFAULT_ARGS,
          #  maximum number of active DAG runs, beyond this number of DAG runs in a running state, the scheduler won't create new active DAG runs
          max_active_runs=1,
-         #  Perform scheduler catchup (or only run latest)? Defaults to True
          schedule_interval=None,
          catchup=False,
          #  List of tags to help filtering DAGs in the UI.
          tags=['main, aws_emr_to_s3, ETL, Pyspark, EMR']
          ) as dag:
+
+    # Before start etl, I should remove all xcom records from postgres database
+    # Postgres_Clear_Xcom_Records = PostgresOperator(
+    #     task_id='delete_xcom_task',
+    #     postgres_conn_id='{{ var.value.Postgres_conn_DB }}',
+    #     autocommit=True,
+    #     sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dt }}}}';"
+    # )
 
     start = DummyOperator(task_id='Start')
 
@@ -238,6 +229,11 @@ with DAG(DAG_ID,
         steps=SPARK_STEPS
     )
 
+    # Data Check for Data Quality using SparkSubmitOperator
+    spark_submit_aws = SparkSubmitOperator(
+        
+    )
+
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
     wait_for_step = EmrStepSensor(
         task_id='Add_Steps',
@@ -248,7 +244,7 @@ with DAG(DAG_ID,
 
     terminal_job = EmrTerminateJobFlowOperator(
         task_id='terminal_emr_cluster',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")) }}',
+        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
         aws_conn_id=AWS_CONN_ID
     )
 
@@ -260,5 +256,7 @@ with DAG(DAG_ID,
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
 
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
+
+    # Postgres_Clear_Xcom_Records >> start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
 
     start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
