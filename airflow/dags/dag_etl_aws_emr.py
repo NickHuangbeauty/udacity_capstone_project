@@ -184,9 +184,9 @@ with DAG(DAG_ID,
     # Before start etl, I should remove all xcom records from postgres database
     postgres_clear_xcom_records = PostgresOperator(
         task_id='delete_xcom_task',
-        postgres_conn_id='{{ var.value.Postgres_conn_DB }}',
+        postgres_conn_id='pg_conn',
         autocommit=True,
-        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dt }}}}';"
+        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
     )
 
     start = DummyOperator(task_id='Start')
