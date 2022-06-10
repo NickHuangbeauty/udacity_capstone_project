@@ -182,12 +182,12 @@ with DAG(DAG_ID,
          ) as dag:
 
     # Before start etl, I should remove all xcom records from postgres database
-    # Postgres_Clear_Xcom_Records = PostgresOperator(
-    #     task_id='delete_xcom_task',
-    #     postgres_conn_id='{{ var.value.Postgres_conn_DB }}',
-    #     autocommit=True,
-    #     sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dt }}}}';"
-    # )
+    postgres_clear_xcom_records = PostgresOperator(
+        task_id='delete_xcom_task',
+        postgres_conn_id='{{ var.value.Postgres_conn_DB }}',
+        autocommit=True,
+        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dt }}}}';"
+    )
 
     start = DummyOperator(task_id='Start')
 
@@ -205,7 +205,8 @@ with DAG(DAG_ID,
         reset_dag_run=True,
         wait_for_completion=True,
         poke_interval=15,
-        allowed_states=[State.SUCCESS]
+        allowed_states=[State.SUCCESS, State.RUNNING],
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
     )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
@@ -216,7 +217,8 @@ with DAG(DAG_ID,
         reset_dag_run=True,
         wait_for_completion=True,
         poke_interval=15,
-        allowed_states=[State.SUCCESS]
+        allowed_states=[State.SUCCESS, State.RUNNING],
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
     )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
@@ -241,7 +243,8 @@ with DAG(DAG_ID,
         task_id='Add_Steps',
         job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
         step_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Add_EMR_Step")|last }}',
-        aws_conn_id=AWS_CONN_ID
+        aws_conn_id=AWS_CONN_ID,
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED, State.UP_FOR_RETRY]
     )
 
     stop_and_remove_emr = EmrTerminateJobFlowOperator(
@@ -252,7 +255,7 @@ with DAG(DAG_ID,
 
     end = DummyOperator(task_id='End_to_Add_EMR_Step')
 
-    no_reachable = DummyOperator(task_id='No_Reachable_Step')
+    # no_reachable = DummyOperator(task_id='No_Reachable_Step')
 
 
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
@@ -261,5 +264,4 @@ with DAG(DAG_ID,
 
     # Postgres_Clear_Xcom_Records >> start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
 
-    start >> [trigger_upload_etl_emr_to_s3,
-              trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    start >> postgres_clear_xcom_records >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
