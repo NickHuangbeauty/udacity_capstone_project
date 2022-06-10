@@ -73,7 +73,7 @@ SPARK_STEPS = [
             ],
             "Jar": "command-runner.jar"
         },
-        "Name": "Upload sas jars file from local to aws s3"
+        "Name": "Move dl from s3 to .aws directory"
     },
     {
         "ActionOnFailure": "CONTINUE",
@@ -85,7 +85,7 @@ SPARK_STEPS = [
             ],
             "Jar": "command-runner.jar"
         },
-        "Name": "Move jars file from s3 to dest"
+        "Name": "Move jars file from s3 to spark jars directory"
     },
     {
         "ActionOnFailure": "CONTINUE",
