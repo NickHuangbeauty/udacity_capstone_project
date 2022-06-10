@@ -28,15 +28,14 @@ Job_Flow_Role = Variable.get('Job_Flow_Role')
 Log_Bucket = Variable.get('Log_Bucket')
 Data_Bucket = Variable.get('Data_Bucket')
 Service_Role = Variable.get('Service_Role')
-Postgres_conn_DB = Variable.get('airflow_db')
+Postgres_conn_DB = Variable.get('Postgres_conn_DB')
 
 
 DEFAULT_ARGS = {
     'owner': 'OneForALL',
-    'depends_on_past': True,
-    'wait_for_downstream': True,
+    'depends_on_past': False,
     'start_date': datetime(2022, 1, 12),
-    'retries': 10,
+    'retries': 5,
     'retry_delay': timedelta(minutes=3),
     'email_on_retry': False
 }
@@ -69,26 +68,32 @@ SPARK_STEPS = [
         "HadoopJarStep": {
             "Args": [
                 "s3-dist-cp",
-                "--src=s3://{{ var.value.Data_Bucket }}/upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar",
-                "--dest=/usr/lib/spark/jars"
+                "--src=s3://{{ var.value.Data_Bucket }}/config/dl.cfg",
+                "--dest=/home/hadoop/.aws"
             ],
             "Jar": "command-runner.jar"
         },
         "Name": "Upload sas jars file from local to aws s3"
     },
     {
-        "ActionOnFailure": "CANCEL_AND_WAIT",
+        "ActionOnFailure": "CONTINUE",
+        "HadoopJarStep": {
+            "Args": [
+                "s3-dist-cp",
+                "--src=s3://{{ var.value.Data_Bucket }}/upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar",
+                "--dest=/usr/lib/spark/jars"
+            ],
+            "Jar": "command-runner.jar"
+        },
+        "Name": "Move jars file from s3 to dest"
+    },
+    {
+        "ActionOnFailure": "CONTINUE",
         "HadoopJarStep": {
             "Args": [
                 "spark-submit",
-                "--master",
-                "yarn",
                 "--deploy-mode",
-                "cluster",
-                "--conf",
-                "spark.yarn.submit.waitAppCompletion=true"
-                "--name",
-                "data_spark_on_emr",
+                "client",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py"
             ],
             "Jar": "command-runner.jar"
@@ -200,7 +205,7 @@ with DAG(DAG_ID,
         reset_dag_run=True,
         wait_for_completion=True,
         poke_interval=15,
-        allowed_states=[State.SUCCESS, State.RUNNING, State.FAILED]
+        allowed_states=[State.SUCCESS]
     )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
@@ -211,7 +216,7 @@ with DAG(DAG_ID,
         reset_dag_run=True,
         wait_for_completion=True,
         poke_interval=15,
-        allowed_states=[State.SUCCESS, State.RUNNING, State.FAILED]
+        allowed_states=[State.SUCCESS]
     )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
@@ -225,35 +230,23 @@ with DAG(DAG_ID,
     add_steps = EmrAddStepsOperator(
         task_id='Add_EMR_Step',
         aws_conn_id=AWS_CONN_ID,
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
+        job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
         steps=SPARK_STEPS
     )
 
-    # TODO: For Looking dive into xcom
-    logging.info(f"This is job flow id: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value') }}}}'")
-
     # Data Check for Data Quality using SparkSubmitOperator
-    spark_submit_aws = SparkSubmitOperator(
-        task_id='Spark_Submit_AWS',
-    )
 
     # Asks for the state of the step until it reaches any of the target states. If it fails the sensor errors, failing the task.
-    wait_for_step = EmrStepSensor(
+    watch_step = EmrStepSensor(
         task_id='Add_Steps',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value")[0] }}',
-        step_id='{{ task_instance.xcom_pull(task_ids="Add_EMR_Step", key="return_value")[1] }}',
+        job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
+        step_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Add_EMR_Step")|last }}',
         aws_conn_id=AWS_CONN_ID
     )
-    # TODO: For Looking dive into xcom
-    logging.info(f"This is job flow id index 0: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value')[0] }}}}'")
 
-    # TODO: For Looking dive into xcom
-    logging.info(
-        f"This is job flow id index 1: '{{{{ task_instance.xcom_pull(task_ids='Create_Emr_Cluster', key='return_value')[1] }}}}'")
-
-    terminal_job = EmrTerminateJobFlowOperator(
+    stop_and_remove_emr = EmrTerminateJobFlowOperator(
         task_id='terminal_emr_cluster',
-        job_flow_id='{{ task_instance.xcom_pull(task_ids="Create_Emr_Cluster", key="return_value") }}',
+        job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
         aws_conn_id=AWS_CONN_ID
     )
 
@@ -268,4 +261,5 @@ with DAG(DAG_ID,
 
     # Postgres_Clear_Xcom_Records >> start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
 
-    start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
+    start >> [trigger_upload_etl_emr_to_s3,
+              trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end

@@ -13,25 +13,24 @@ from pyspark.sql.types import (StructType,
                                FloatType)
 
 # ***** Access AWS Cloud configure ************
-# config = configparser.ConfigParser()
-# # config.read_file(open('s3://mydatapool/config/dl.cfg'))
-# config.read_file(open('/Users/oneforall_nick/workspace/Udacity_capstone_project/dl.cfg'))
+config = configparser.ConfigParser()
+# config.read_file(open('s3://mydatapool/config/dl.cfg'))
+config.read_file(open('/home/hadoop/.aws/config/dl.cfg'))
 
-# os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
-# os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
+os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
+os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
 
-# # Access data from AWS S3
-# SOURCE_S3_BUCKET = config['S3']['SOURCE_S3_BUCKET']
-# # Write data to AWS S3
-# DEST_S3_BUCKET = config['S3']['DEST_S3_BUCKET']
+# Access data from AWS S3
+SOURCE_S3_BUCKET = config['S3']['SOURCE_S3_BUCKET']
+# Write data to AWS S3
+DEST_S3_BUCKET = config['S3']['DEST_S3_BUCKET']
 # *********************************************
 
 # TODO ***** Local Testing configure ************
-SOURCE_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/'
-DEST_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/dest_data'
+# SOURCE_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/'
+# DEST_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/dest_data'
 
 # ***** Local Testing configure *****************
-
 
 
 def create_spark_session():
@@ -69,21 +68,24 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     Returns:
         _type_: _description_
     """
-    imm_path = os.path.join(SOURCE_S3_BUCKET, "data/immigration_data/immigration_apr16_sub.sas7bdat")
+    imm_path = os.path.join(
+        SOURCE_S3_BUCKET, "data/immigration_data/immigration_apr16_sub.sas7bdat")
 
-    df_imm_data = spark.read.format("com.github.saurfang.sas.spark").load(imm_path)
+    df_imm_data = spark.read.format(
+        "com.github.saurfang.sas.spark").load(imm_path)
 
     # Dimension Table: Immigration personal data
     df_immigration_personal = df_imm_data.withColumn("imm_per_cic_id", col("cicid").cast("String")) \
-                                            .withColumn("imm_person_birth_year", col("biryear").cast("Integer")) \
-                                                .withColumn("imm_person_gender", col("gender").cast("String")) \
-                                                    .withColumn("imm_visatype", col("visatype").cast("String")) \
-                                        .select(col("imm_per_cic_id"),
-                                                    col("imm_person_birth_year"),
-                                                        col("imm_person_gender"),
-                                                            col("imm_visatype"))
+        .withColumn("imm_person_birth_year", col("biryear").cast("Integer")) \
+        .withColumn("imm_person_gender", col("gender").cast("String")) \
+        .withColumn("imm_visatype", col("visatype").cast("String")) \
+        .select(col("imm_per_cic_id"),
+                col("imm_person_birth_year"),
+                col("imm_person_gender"),
+                col("imm_visatype"))
 
-    df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView("imm_personal")
+    df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView(
+        "imm_personal")
 
     df_immigration_personal_tmp = spark.sql("SELECT * FROM imm_personal")
 
@@ -110,35 +112,36 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
             return date + timedelta(days=days)
 
-
-        udf_convert_to_datetime = udf(lambda x: convert_to_datetime(x), DateType())
+        udf_convert_to_datetime = udf(
+            lambda x: convert_to_datetime(x), DateType())
 
         immigration_main_information = df_imm_data.withColumn("imm_main_cic_id", col("cicid").cast("Integer"))\
-                                                    .withColumn("imm_year", col("i94yr").cast("Integer"))\
-                                                        .withColumn("imm_month", col("i94mon").cast("Integer"))\
-                                                            .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
-                                                                .withColumn("imm_visa", col("i94visa").cast("Integer"))\
-                                                                    .withColumn("imm_port", col("i94port").cast("String"))\
-                                                                        .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
-                                                                            .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
-                                                                                .withColumn("imm_model", col("i94mode").cast("Integer"))\
-                                                                                    .withColumn("imm_address", col("i94addr").cast("String"))\
-                                                                                        .withColumn("imm_airline", col("airline").cast("String"))\
-                                                                                            .withColumn("imm_flight_no", col("fltno").cast("String"))\
-                            .select(col('imm_main_cic_id'),
-                                        col('imm_year'),
-                                            col('imm_month'),
-                                                col('imm_cntyl'),
-                                                    col('imm_visa'),
-                                                        col('imm_port'),
-                                                            col('imm_arrival_date'),
-                                                                col('imm_departure_date'),
-                                                                    col('imm_model'),
-                                                                        col('imm_address'),
-                                                                            col('imm_airline'),
-                                                                                col('imm_flight_no'))
+            .withColumn("imm_year", col("i94yr").cast("Integer"))\
+            .withColumn("imm_month", col("i94mon").cast("Integer"))\
+            .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
+            .withColumn("imm_visa", col("i94visa").cast("Integer"))\
+            .withColumn("imm_port", col("i94port").cast("String"))\
+            .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
+            .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
+            .withColumn("imm_model", col("i94mode").cast("Integer"))\
+            .withColumn("imm_address", col("i94addr").cast("String"))\
+            .withColumn("imm_airline", col("airline").cast("String"))\
+            .withColumn("imm_flight_no", col("fltno").cast("String"))\
+            .select(col('imm_main_cic_id'),
+                    col('imm_year'),
+                    col('imm_month'),
+                    col('imm_cntyl'),
+                    col('imm_visa'),
+                    col('imm_port'),
+                    col('imm_arrival_date'),
+                    col('imm_departure_date'),
+                    col('imm_model'),
+                    col('imm_address'),
+                    col('imm_airline'),
+                    col('imm_flight_no'))
 
-        df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView("immigration_main_information_data")
+        df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView(
+            "immigration_main_information_data")
 
         df_immigration_main_information_tmp = spark.sql(
             "SELECT * FROM immigration_main_information_data")
@@ -164,28 +167,30 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     """
     news_path = os.path.join(SOURCE_S3_BUCKET, "data/news_data/metadata.csv")
 
-    df_news = spark.read.options(header=True, delimiter=',').csv(path=news_path)
+    df_news = spark.read.options(
+        header=True, delimiter=',').csv(path=news_path)
 
     df_news = df_news.withColumn("news_cord_uid", col("cord_uid").cast("String")) \
-                        .withColumn("news_source", col("source_x").cast("String")) \
-                            .withColumn("news_title", col("title").cast("String")) \
-                                .withColumn("news_licence", col("license").cast("String")) \
-                                    .withColumn("news_abstract", col("abstract").cast("String")) \
-                                        .withColumn("news_publish_time", to_date(df_news.publish_time, "yyyy-MM-dd")) \
-                                            .withColumn("news_authors", col("authors").cast("String")) \
-                                                .withColumn("news_url", col("url").cast("String")) \
-                    .select(col("news_cord_uid"),
-                                    col("news_source"),
-                                        col("news_title"),
-                                            col("news_licence"),
-                                                col("news_abstract"),
-                                                    col("news_publish_time"),
-                                                        col("news_authors"),
-                                                            col("news_url"))
+        .withColumn("news_source", col("source_x").cast("String")) \
+        .withColumn("news_title", col("title").cast("String")) \
+        .withColumn("news_licence", col("license").cast("String")) \
+        .withColumn("news_abstract", col("abstract").cast("String")) \
+        .withColumn("news_publish_time", to_date(df_news.publish_time, "yyyy-MM-dd")) \
+        .withColumn("news_authors", col("authors").cast("String")) \
+        .withColumn("news_url", col("url").cast("String")) \
+        .select(col("news_cord_uid"),
+                col("news_source"),
+                col("news_title"),
+                col("news_licence"),
+                col("news_abstract"),
+                col("news_publish_time"),
+                col("news_authors"),
+                col("news_url"))
 
     df_news_tmp = df_news.createOrReplaceTempView("news_article_data")
 
-    df_news_tmp = spark.sql("SELECT DISTINCT publish_time FROM news_article_data")
+    df_news_tmp = spark.sql(
+        "SELECT DISTINCT publish_time FROM news_article_data")
 
     df_news_tmp.persist()
 
@@ -206,42 +211,47 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
         SOURCE_S3_BUCKET (_type_): _description_
         DEST_S3_BUCKET (_type_): _description_
     """
-    us_cities_demographics_path = os.path.join(SOURCE_S3_BUCKET, "data/usCitiesDemographics_data/usCitiesDemo.csv")
+    us_cities_demographics_path = os.path.join(
+        SOURCE_S3_BUCKET, "data/usCitiesDemographics_data/usCitiesDemo.csv")
 
-    df_us_cities_demographics = spark.read.options(header=True, delimiter=';').csv(us_cities_demographics_path)
+    df_us_cities_demographics = spark.read.options(
+        header=True, delimiter=';').csv(us_cities_demographics_path)
 
     df_us_cities_demographics = df_us_cities_demographics.withColumn("cidemo_city", col("City").cast("String")) \
-                                                            .withColumn("cidemo_state", col("State").cast("String")) \
-                                                                .withColumn("cidemo_median_age", col("Median Age").cast("Float")) \
-                                                                    .withColumn("cidemo_male_population", col("Male Population").cast("Integer")) \
-                                                                        .withColumn("cidemo_female_population", col("Female Population").cast("Integer")) \
-                                                                            .withColumn("cidemo_total_population", col("Total Population").cast("Integer")) \
-                                                                                .withColumn("cidemo_number_of_veterans", col("Number of Veterans").cast("Integer")) \
-                                                                                    .withColumn("cidemo_foreign_born", col("Foreign-born").cast("Integer")) \
-                                                                                        .withColumn("cidemo_average_household_size", col("Average Household Size").cast("Float")) \
-                                                                                            .withColumn("cidemo_state_code", col("State Code").cast("String")) \
-                                                                                                .withColumn("cidemo_race", col("Race").cast("String")) \
-                                                                                                    .withColumn("cidemo_count", col("Count").cast("Integer")) \
-                                                    .select(col("cidemo_city"),
-                                                                col("cidemo_state"),
-                                                                    col("cidemo_median_age"),
-                                                                        col("cidemo_total_population"),
-                                                                            col("cidemo_state_code"),
-                                                                                col("cidemo_count"))
+        .withColumn("cidemo_state", col("State").cast("String")) \
+        .withColumn("cidemo_median_age", col("Median Age").cast("Float")) \
+        .withColumn("cidemo_male_population", col("Male Population").cast("Integer")) \
+        .withColumn("cidemo_female_population", col("Female Population").cast("Integer")) \
+        .withColumn("cidemo_total_population", col("Total Population").cast("Integer")) \
+        .withColumn("cidemo_number_of_veterans", col("Number of Veterans").cast("Integer")) \
+        .withColumn("cidemo_foreign_born", col("Foreign-born").cast("Integer")) \
+        .withColumn("cidemo_average_household_size", col("Average Household Size").cast("Float")) \
+        .withColumn("cidemo_state_code", col("State Code").cast("String")) \
+        .withColumn("cidemo_race", col("Race").cast("String")) \
+        .withColumn("cidemo_count", col("Count").cast("Integer")) \
+        .select(col("cidemo_city"),
+                col("cidemo_state"),
+                col("cidemo_median_age"),
+                col("cidemo_total_population"),
+                col("cidemo_state_code"),
+                col("cidemo_count"))
 
     # Auto-generated series of id
-    df_us_cities_demographics = df_us_cities_demographics.withColumn("cidemo_id", monotonically_increasing_id())
+    df_us_cities_demographics = df_us_cities_demographics.withColumn(
+        "cidemo_id", monotonically_increasing_id())
 
-    df_us_cities_demographics_temp = df_news.createOrReplaceTempView("us_cities_demographics_data")
+    df_us_cities_demographics_temp = df_news.createOrReplaceTempView(
+        "us_cities_demographics_data")
 
-    df_us_cities_demographics_temp = spark.sql("SELECT * FROM us_cities_demographics_data")
+    df_us_cities_demographics_temp = spark.sql(
+        "SELECT * FROM us_cities_demographics_data")
 
     df_us_cities_demographics_temp.persist()
 
     # df_us_cities_demographics_temp.explain()
 
     df_us_cities_demographics_temp.write.mode("overwrite") \
-                                  .parquet(path = f'{DEST_S3_BUCKET}dimension_table/us_cities_demographics_data')
+                                  .parquet(path=f'{DEST_S3_BUCKET}dimension_table/us_cities_demographics_data')
 
 
 def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
@@ -257,17 +267,21 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     Returns:
         _type_: _description_
     """
-    imm_label_path = os.path.join(SOURCE_S3_BUCKET, "data/immigration_data/immigration_labels_descriptions.SAS")
+    imm_label_path = os.path.join(
+        SOURCE_S3_BUCKET, "data/immigration_data/immigration_labels_descriptions.SAS")
 
     with open(imm_label_path) as f:
         context = f.read().replace('\t', '')
 
     def code_mapping(context, idx):
         content_mapping = context[context.index(idx):]
-        content_line_split = content_mapping[:content_mapping.index(';')].split('\n')
-        content_line_list = [line.replace("'", "") for line in content_line_split]
+        content_line_split = content_mapping[:content_mapping.index(
+            ';')].split('\n')
+        content_line_list = [line.replace("'", "")
+                             for line in content_line_split]
         content_dict = [i.split('=') for i in content_line_list[1:]]
-        content_dict = [[i[0].strip(), i[1].strip().split(', ')[:][0], e] for i in content_dict if len(i) == 2 for e in i[1].strip().split(', ')[1:]]
+        content_dict = [[i[0].strip(), i[1].strip().split(', ')[:][0], e]
+                        for i in content_dict if len(i) == 2 for e in i[1].strip().split(', ')[1:]]
         return content_dict
 
     imm_cit_res = code_mapping(context, "i94cntyl")
@@ -292,22 +306,24 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                                                 .withColumn("value_of_alias_imm_destination_city", col("value_of_alias_imm_destination_city").cast("String"))
 
     # For querying and joining other tables.
-    df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView("imm_destination_city_data")
+    df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView(
+        "imm_destination_city_data")
 
-    df_imm_destination_city_tmp = spark.sql("SELECT * FROM imm_destination_city_data")
+    df_imm_destination_city_tmp = spark.sql(
+        "SELECT * FROM imm_destination_city_data")
 
     df_imm_destination_city_tmp.persist()
 
     # Saved in AWS S3
     df_imm_destination_city_tmp.write.mode("overwrite") \
-                               .parquet(path = f'{DEST_S3_BUCKET}dimension_table/imm_destination_city')
+                               .parquet(path=f'{DEST_S3_BUCKET}dimension_table/imm_destination_city')
 
     df_imm_travel_code = spark.sparkContext.parallelize(imm_mode.items()).toDF(["code_of_imm_travel_code", "value_of_imm_travel_code"]) \
                                            .withColumn("code_of_imm_travel_code", col("code_of_imm_travel_code").cast("Integer")) \
                                            .withColumn("value_of_imm_travel_code", col("value_of_imm_travel_code").cast("String"))
     # Saved in AWS S3
     df_imm_travel_code.write.mode("overwrite") \
-                      .parquet(path = f'{DEST_S3_BUCKET}dimension_table/imm_travel_code')
+                      .parquet(path=f'{DEST_S3_BUCKET}dimension_table/imm_travel_code')
 
     df_imm_address = spark.sparkContext.parallelize(imm_addr.items()).toDF(["code_of_imm_address", "value_of_imm_address"]) \
                                        .withColumn("code_of_imm_address", col("code_of_imm_address").cast("String")) \
@@ -315,7 +331,7 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     # Saved in AWS S3
     df_imm_address.write.mode("overwrite") \
-                  .parquet(path = f'{DEST_S3_BUCKET}dimension_table/imm_address')
+                  .parquet(path=f'{DEST_S3_BUCKET}dimension_table/imm_address')
 
     df_imm_visa = spark.sparkContext.parallelize(imm_visa.items()).toDF(["code_of_imm_visa", "value_of_imm_visa"]) \
                                     .withColumn("code_of_imm_visa", col("code_of_imm_visa").cast("Integer")) \
@@ -323,7 +339,7 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     # Saved in AWS S3
     df_imm_visa.write.mode("overwrite") \
-               .parquet(path = f'{DEST_S3_BUCKET}dimension_table/imm_visa')
+               .parquet(path=f'{DEST_S3_BUCKET}dimension_table/imm_visa')
 
 
 def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
@@ -369,7 +385,8 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
     # Saved in AWS S3
     df_notification.write.mode("overwrite") \
                    .partitionBy("news_publish_time") \
-                   .parquet(path = f'{DEST_S3_BUCKET}fact_table/notification')
+                   .parquet(path=f'{DEST_S3_BUCKET}fact_table/notification')
+
 
 def main():
 

@@ -1,33 +1,12 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-
+from airflow.operators.python import PythonOperator
 from random import uniform
 from datetime import datetime
 
 default_args = {
-    'start_date': datetime(2021, 1, 1)
+    'start_date': datetime(2020, 1, 1)
 }
-
-# def _cleaning():
-#     print('Clearning from target DAG')
-
-# with DAG('target_dag',
-#     schedule_interval='@daily',
-#     default_args=default_args,
-#     catchup=False) as dag:
-
-#     storing = BashOperator(
-#         task_id='storing',
-#         bash_command='sleep 30'
-#     )
-
-#     cleaning = PythonOperator(
-#         task_id='cleaning',
-#         python_callable=lambda: print('Clearning from target DAG')
-#     )
-
-#     storing >> cleaning
 
 
 def _training_model(**context):
@@ -38,15 +17,13 @@ def _training_model(**context):
     # push an Airflow XCom with self.
     context['task_instance'].xcom_push(key='model_accuracy', value=accuracy)
 
-
 def _choose_best_model(**context):
     print('choose best model')
-    fetch = context['task_instance'].xcom_pull(
-        key='model_accuracy', task_ids='training_model_A')
-    print(f"training_model_A's model accuracy: {fetch}")
+    # fetch = context['task_instance'].xcom_pull(key='model_accuracy', task_ids='training_model_A')
 
 
-with DAG('target_xcom_dag', schedule_interval='@daily', default_args=default_args, catchup=False) as dag:
+
+with DAG('xcom_dag', schedule_interval='@daily', default_args=default_args, catchup=False) as dag:
 
     downloading_data = BashOperator(
         task_id='downloading_data',
@@ -64,4 +41,10 @@ with DAG('target_xcom_dag', schedule_interval='@daily', default_args=default_arg
         python_callable=_choose_best_model
     )
 
-    downloading_data >> training_model_task >> choose_model
+    std_out = BashOperator(
+        task_id='std_out',
+        bash_command='echo "{{ task_instance.xcom_pull(key=\'model_accuracy\', \
+                                                       task_ids=[\'training_model_A\', \'training_model_B\', \'training_model_C\'])|last }}"'
+    )
+
+    downloading_data >> training_model_task >> choose_model >> std_out

@@ -9,3 +9,6 @@ airflow/airflow.db
 airflow/tests
 newrelic_agent.log
 practice.txt
+# airflow/dags/pg_dag.py
+# airflow/dags/xcom_dag.py
+airflow/test.sql

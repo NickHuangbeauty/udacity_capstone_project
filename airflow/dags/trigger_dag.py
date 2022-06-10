@@ -25,7 +25,7 @@ with DAG('trigger_dag',
     # → Might be useful to share XCOMs between DAGs(I do not recommend to do that)
     trigger_target = TriggerDagRunOperator(
         task_id='trigger_target',
-        trigger_dag_id='target_dag',
+        trigger_dag_id='target_xcom_dag',
         execution_date= '{{ ds }}',
         reset_dag_run=True,
         wait_for_completion=True,
