@@ -48,3 +48,14 @@ with DAG('xcom_dag', schedule_interval='@daily', default_args=default_args, catc
     )
 
     downloading_data >> training_model_task >> choose_model >> std_out
+
+# aws s3-dist-cp --src='s3://mydatapool/config/dl.cfg' --dest='/home/hadoop/.aws'
+
+
+# aws emr ssh --cluster-id 'j-3CE5UWT2FUM9G' \
+#     --key-pair-file 'nick_key_pair.pem' \
+#     --command 's3-dist-cp --src s3://mydatapool/config/dl.cfg --dest /home/hadoop/.aws'
+    
+    
+    
+# s3-dist-cp --src='s3://mydatapool//upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar' --dest='/usr/lib/spark/jars'

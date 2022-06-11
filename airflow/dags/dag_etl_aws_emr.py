@@ -64,41 +64,43 @@ DEFAULT_ARGS = {
 # ******* SPARK_STEPS & JobFlow *******
 SPARK_STEPS = [
     {
-        "ActionOnFailure": "CONTINUE",
+        "Name": "Move dl from s3 to .aws directory",
+        "ActionOnFailure": "CANCEL_AND_WAIT",
         "HadoopJarStep": {
+            "Jar": "command-runner.jar",
             "Args": [
                 "s3-dist-cp",
                 "--src=s3://{{ var.value.Data_Bucket }}/config/dl.cfg",
-                "--dest=/home/hadoop/.aws"
+                "--dest=/home/hadoop/.aws/",
             ],
-            "Jar": "command-runner.jar"
         },
-        "Name": "Move dl from s3 to .aws directory"
     },
     {
+        "Name": "Move jars file from s3 to spark jars directory",
         "ActionOnFailure": "CONTINUE",
         "HadoopJarStep": {
+            "Jar": "command-runner.jar",
             "Args": [
                 "s3-dist-cp",
                 "--src=s3://{{ var.value.Data_Bucket }}/upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar",
-                "--dest=/usr/lib/spark/jars"
+                "--dest=/usr/lib/spark/jars/",
             ],
-            "Jar": "command-runner.jar"
         },
-        "Name": "Move jars file from s3 to spark jars directory"
     },
     {
-        "ActionOnFailure": "CONTINUE",
+        "Name": "For Dealing with data and analytics using Spark on AWS EMR",
+        "ActionOnFailure": "CANCEL_AND_WAIT",
         "HadoopJarStep": {
+            "Jar": "command-runner.jar",
             "Args": [
                 "spark-submit",
                 "--deploy-mode",
                 "client",
-                "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py"
+                "--packages",
+                "saurfang:spark-sas7bdat:3.0.0-s_2.12",
+                "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",
             ],
-            "Jar": "command-runner.jar"
         },
-        "Name": "For Dealing with data and analytics using Spark on AWS EMR"
     }
 ]
 
@@ -139,25 +141,25 @@ JOB_FLOW_OVERRIDES = {
             {
                 "InstanceCount": 1,
                 "InstanceRole": "MASTER",
-                "InstanceType": "m3.xlarge",
+                "InstanceType": "m5.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Primary_Node"
             },
             {
                 "InstanceCount": 2,
                 "InstanceRole": "CORE",
-                "InstanceType": "m3.xlarge",
+                "InstanceType": "m5.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Core_Node_2"
             }
         ],
-        "KeepJobFlowAliveWhenNoSteps": False,
+        "KeepJobFlowAliveWhenNoSteps": True,
         "TerminationProtected": False
     },
     "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
     "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
     "Name": "Udacity_Capstone_Spark_On_EMR",
-    "ReleaseLabel": "emr-5.29.0",
+    "ReleaseLabel": "emr-5.28.0",
     "ServiceRole": "{{ var.value.Service_Role }}",
     "VisibleToAllUsers": True
 }
@@ -233,7 +235,8 @@ with DAG(DAG_ID,
         task_id='Add_EMR_Step',
         aws_conn_id=AWS_CONN_ID,
         job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
-        steps=SPARK_STEPS
+        steps=SPARK_STEPS,
+        do_xcom_push=True
     )
 
     # Data Check for Data Quality using SparkSubmitOperator
