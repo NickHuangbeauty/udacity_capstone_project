@@ -29,7 +29,7 @@ Log_Bucket = Variable.get('Log_Bucket')
 Data_Bucket = Variable.get('Data_Bucket')
 Service_Role = Variable.get('Service_Role')
 Postgres_conn_DB = Variable.get('Postgres_conn_DB')
-
+Data_Bucket_params = 'mydatapool'
 
 DEFAULT_ARGS = {
     'owner': 'OneForALL',
@@ -64,18 +64,6 @@ DEFAULT_ARGS = {
 # ******* SPARK_STEPS & JobFlow *******
 SPARK_STEPS = [
     {
-        "Name": "Move dl from s3 to .aws directory",
-        "ActionOnFailure": "CANCEL_AND_WAIT",
-        "HadoopJarStep": {
-            "Jar": "command-runner.jar",
-            "Args": [
-                "s3-dist-cp",
-                "--src=s3://{{ var.value.Data_Bucket }}/config/dl.cfg",
-                "--dest=/home/hadoop/.aws/",
-            ],
-        },
-    },
-    {
         "Name": "Move jars file from s3 to spark jars directory",
         "ActionOnFailure": "CONTINUE",
         "HadoopJarStep": {
@@ -96,8 +84,6 @@ SPARK_STEPS = [
                 "spark-submit",
                 "--deploy-mode",
                 "client",
-                "--packages",
-                "saurfang:spark-sas7bdat:3.0.0-s_2.12",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",
             ],
         },
@@ -159,7 +145,7 @@ JOB_FLOW_OVERRIDES = {
     "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
     "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
     "Name": "Udacity_Capstone_Spark_On_EMR",
-    "ReleaseLabel": "emr-5.28.0",
+    "ReleaseLabel": "emr-6.3.0",
     "ServiceRole": "{{ var.value.Service_Role }}",
     "VisibleToAllUsers": True
 }
@@ -212,16 +198,16 @@ with DAG(DAG_ID,
     )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
-    trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
-        task_id='Trigger_upload_source_data_step',
-        trigger_dag_id='dag_upload_data_to_aws_s3',
-        execution_date='{{ ds }}',
-        reset_dag_run=True,
-        wait_for_completion=True,
-        poke_interval=15,
-        allowed_states=[State.SUCCESS, State.RUNNING],
-        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    )
+    # trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
+    #     task_id='Trigger_upload_source_data_step',
+    #     trigger_dag_id='dag_upload_data_to_aws_s3',
+    #     execution_date='{{ ds }}',
+    #     reset_dag_run=True,
+    #     wait_for_completion=True,
+    #     poke_interval=15,
+    #     allowed_states=[State.SUCCESS, State.RUNNING],
+    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    # )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
@@ -236,6 +222,7 @@ with DAG(DAG_ID,
         aws_conn_id=AWS_CONN_ID,
         job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
         steps=SPARK_STEPS,
+        params={'Data_Bucket': Data_Bucket_params},
         do_xcom_push=True
     )
 
@@ -265,6 +252,5 @@ with DAG(DAG_ID,
 
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
 
-    # Postgres_Clear_Xcom_Records >> start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
-
-    start >> postgres_clear_xcom_records >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    start >> postgres_clear_xcom_records >> trigger_upload_etl_emr_to_s3 >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    # start >> postgres_clear_xcom_records >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
