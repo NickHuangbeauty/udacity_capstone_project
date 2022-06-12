@@ -1,6 +1,7 @@
 import os
 import configparser
 import logging
+import boto3
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, monotonically_increasing_id, udf, to_date
@@ -13,12 +14,12 @@ from pyspark.sql.types import (StructType,
                                FloatType)
 
 # ***** Access AWS Cloud configure ************
-# config = configparser.ConfigParser()
-# config.read_file(open('s3://mydatapool/config/dl.cfg'))
+config = configparser.ConfigParser()
+config.read_file(open('s3://mydatapool/config/dl.cfg'))
 # config.read_file(open('dl.cfg'))
 
-# os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
-# os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
+os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
+os.environ["AWS_SECRET_ACCESS_KEY"] = config["ACCESS"]["AWS_SECRET_ACCESS_KEY"]
 
 # Access data from AWS S3
 # SOURCE_S3_BUCKET = config['S3']['SOURCE_S3_BUCKET']
@@ -33,6 +34,13 @@ DEST_S3_BUCKET = 's3://destetlbucket'
 # DEST_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/dest_data'
 
 # ***** Local Testing configure *****************
+
+session = boto3.Session(
+    aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+    aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"]
+)
+
+s3_access = session.resource('s3')
 
 
 def create_spark_session():
@@ -255,7 +263,7 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
         mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/us_cities_demographics_data')
 
 
-def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     """process_dim_label _summary_
 
     _extended_summary_
@@ -268,79 +276,80 @@ def process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     Returns:
         _type_: _description_
     """
-    imm_label_path = os.path.join(
-        SOURCE_S3_BUCKET, "data/immigration_data/immigration_labels_descriptions.SAS")
 
-    with open(imm_label_path) as f:
-        context = f.read().replace('\t', '')
+    s3_object = s3_access.Bucket('mydatapool').Object('data/immigration_data/immigration_labels_descriptions.SAS').get()
+    text = s3_object['Body'].read()
+    context = text.decode(encoding ='utf-8')
+
+    context = context.replace('\t', '')
 
     def code_mapping(context, idx):
         content_mapping = context[context.index(idx):]
         content_line_split = content_mapping[:content_mapping.index(
             ';')].split('\n')
         content_line_list = [line.replace("'", "")
-                             for line in content_line_split]
-        content_dict = [i.split('=') for i in content_line_list[1:]]
-        content_dict = [[i[0].strip(), i[1].strip().split(', ')[:][0], e]
-                        for i in content_dict if len(i) == 2 for e in i[1].strip().split(', ')[1:]]
-        return content_dict
+                            for line in content_line_split]
+        content_two_dims = [i.strip().split('=') for i in content_line_list[1:]]
+        content_three_dims = [[i[0].strip(), i[1].strip().split(', ')[:][0], e]
+                            for i in content_two_dims if len(i) == 2 for e in i[1].strip().split(', ')[1:]]
+        return content_two_dims, content_three_dims
 
-    imm_cit_res = code_mapping(context, "i94cntyl")
-    imm_port = code_mapping(context, "i94prtl")
-    imm_mode = code_mapping(context, "i94model")
-    imm_addr = code_mapping(context, "i94addrl")
-    imm_visa = {'1': 'Business',
-                '2': 'Pleasure',
-                '3': 'Student'}
+    # ***** imm_cit_res *****
+    imm_cit_res_two, imm_cit_res_three = code_mapping(context, "i94cntyl")
 
-    df_imm_city_res_label = spark.sparkContext.parallelize(imm_cit_res.items()).toDF(["col_of_imm_cntyl", "value_of_imm_cntyl"]) \
-                                              .withColumn("col_of_imm_cntyl", col("col_of_imm_cntyl").cast("Integer")) \
-                                              .withColumn("value_of_imm_cntyl", col("value_of_imm_cntyl").cast("String"))
+    df_imm_city_res_label = spark.sparkContext.parallelize(imm_cit_res_three).toDF(["col_of_imm_cntyl", "value_of_imm_cntyl", "value_of_imm_cntyl_organizations"]) \
+        .withColumn("col_of_imm_cntyl", col("col_of_imm_cntyl").cast("Integer")) \
+        .withColumn("value_of_imm_cntyl", col("value_of_imm_cntyl").cast("String")) \
+        .withColumn("value_of_imm_cntyl", col("value_of_imm_cntyl_organizations").cast("String")) \
 
     # Saved in AWS S3
     df_imm_city_res_label.write.parquet(
         mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_city_res_label')
+    # **********************
 
-    df_imm_destination_city = spark.sparkContext.parallelize(imm_port).toDF(["code_of_imm_destination_city", "value_of_imm_destination_city", "value_of_alias_imm_destination_city"]) \
+    # ***** imm_port *****
+    imm_port_two, imm_port_three = code_mapping(context, "i94prtl")
+    df_imm_destination_city = spark.sparkContext.parallelize(imm_port_three).toDF(["code_of_imm_destination_city", "value_of_imm_destination_city", "value_of_alias_imm_destination_city"]) \
                                                 .withColumn("code_of_imm_destination_city", col("code_of_imm_destination_city").cast("String")) \
                                                 .withColumn("value_of_imm_destination_city", col("value_of_imm_destination_city").cast("String")) \
                                                 .withColumn("value_of_alias_imm_destination_city", col("value_of_alias_imm_destination_city").cast("String"))
-
     # For querying and joining other tables.
-    df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView(
-        "imm_destination_city_data")
-
-    df_imm_destination_city_tmp = spark.sql(
-        "SELECT * FROM imm_destination_city_data")
-
+    df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView("imm_destination_city_data")
+    df_imm_destination_city_tmp = spark.sql("SELECT * FROM imm_destination_city_data")
     df_imm_destination_city_tmp.persist()
-
     # Saved in AWS S3
-    df_imm_destination_city_tmp.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_destination_city')
+    df_imm_destination_city_tmp.write.parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_destination_city')
+    # ********************
 
-    df_imm_travel_code = spark.sparkContext.parallelize(imm_mode.items()).toDF(["code_of_imm_travel_code", "value_of_imm_travel_code"]) \
+    # ***** imm_mod *****
+    imm_mode_two, imm_mode_three = code_mapping(context, "i94model")
+    df_imm_travel_code = spark.sparkContext.parallelize(imm_mode_two).toDF(["code_of_imm_travel_code", "value_of_imm_travel_code"]) \
                                            .withColumn("code_of_imm_travel_code", col("code_of_imm_travel_code").cast("Integer")) \
                                            .withColumn("value_of_imm_travel_code", col("value_of_imm_travel_code").cast("String"))
     # Saved in AWS S3
-    df_imm_travel_code.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_travel_code')
+    df_imm_travel_code.write.parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_travel_code')
+    # *******************
 
-    df_imm_address = spark.sparkContext.parallelize(imm_addr.items()).toDF(["code_of_imm_address", "value_of_imm_address"]) \
-                                       .withColumn("code_of_imm_address", col("code_of_imm_address").cast("String")) \
-                                       .withColumn("value_of_imm_address", col("value_of_imm_address").cast("String"))
-
+    # ***** imm_addr *****
+    imm_addr_two, imm_addr_three = code_mapping(context, "i94addrl")
+    df_imm_address = spark.sparkContext.parallelize(imm_addr_two).toDF(["code_of_imm_address", "value_of_imm_address"]) \
+        .withColumn("code_of_imm_address", col("code_of_imm_address").cast("String")) \
+        .withColumn("value_of_imm_address", col("value_of_imm_address").cast("String"))
     # Saved in AWS S3
-    df_imm_address.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_address')
+    df_imm_address.write.parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_address')
+    # ********************
+
+    # ***** imm_visa *****
+    imm_visa = {'1': 'Business',
+                '2': 'Pleasure',
+                '3': 'Student'}
 
     df_imm_visa = spark.sparkContext.parallelize(imm_visa.items()).toDF(["code_of_imm_visa", "value_of_imm_visa"]) \
                                     .withColumn("code_of_imm_visa", col("code_of_imm_visa").cast("Integer")) \
                                     .withColumn("value_of_imm_visa", col("value_of_imm_visa").cast("String"))
-
     # Saved in AWS S3
-    df_imm_visa.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_visa')
+    df_imm_visa.write.parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_visa')
+    # ********************
 
 
 def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
@@ -404,7 +413,7 @@ def main():
     process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating dimension table: label for immigration
-    process_dim_label(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
+    process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
 
     # Process data for creating fact table: notifications
     process_fact_notifications(spark, DEST_S3_BUCKET)
