@@ -12,3 +12,4 @@ practice.txt
 # airflow/dags/pg_dag.py
 # airflow/dags/xcom_dag.py
 airflow/test.sql
+bootstrap_emr.sh
