@@ -1,5 +1,7 @@
+from typing import Sequence
 from airflow.models import BaseOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
+
 
 
 class UploadFilesFromLocalToS3(BaseOperator):
@@ -7,13 +9,15 @@ class UploadFilesFromLocalToS3(BaseOperator):
     Purpose:
         1. Upload files from local to aws s3 after access Aws Service.
     :param s3_bucket:              s3 bucket name
-    :type s3_bucket                str
+    :type s3_bucket                str (templated)
     :param s3_key                  s3 key name (is json file saved in s3 bucket location name)
     :type s3_key                   str
     :param filename_dict           files path and json filename
     format type: {'path/to/your/project/script_name.xxx': 'script_name'}
     :type filename_dict            dictionary
     """
+
+    template_fields: Sequence[str] = ('s3_bucket')
 
     # Setting the task background color
     # RPG: 53, 129, 64 -> Green
