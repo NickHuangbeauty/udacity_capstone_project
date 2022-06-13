@@ -64,18 +64,6 @@ DEFAULT_ARGS = {
 # ******* SPARK_STEPS & JobFlow *******
 SPARK_STEPS = [
     {
-        "Name": "Move jars file from s3 to spark jars directory",
-        "ActionOnFailure": "CONTINUE",
-        "HadoopJarStep": {
-            "Jar": "command-runner.jar",
-            "Args": [
-                "s3-dist-cp",
-                "--src=s3://{{ var.value.Data_Bucket }}/upload_data/jars/spark-sas7bdat-3.0.0-s_2.12.jar",
-                "--dest=/usr/lib/spark/jars/",
-            ],
-        },
-    },
-    {
         "Name": "For Dealing with data and analytics using Spark on AWS EMR",
         "ActionOnFailure": "CANCEL_AND_WAIT",
         "HadoopJarStep": {
@@ -145,7 +133,7 @@ JOB_FLOW_OVERRIDES = {
     "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
     "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
     "Name": "Udacity_Capstone_Spark_On_EMR",
-    "ReleaseLabel": "emr-6.3.0",
+    "ReleaseLabel": "emr-5.36.0",
     "ServiceRole": "{{ var.value.Service_Role }}",
     "VisibleToAllUsers": True
 }
