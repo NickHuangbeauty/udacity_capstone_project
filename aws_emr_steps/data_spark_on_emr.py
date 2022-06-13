@@ -15,7 +15,7 @@ from pyspark.sql.types import (StructType,
 
 # ***** Access AWS Cloud configure ************
 config = configparser.ConfigParser()
-config.read_file(open('s3://mydatapool/config/dl.cfg'))
+config.read_file(open('/home/hadoop/.aws/dl.cfg'))
 # config.read_file(open('dl.cfg'))
 
 os.environ["AWS_ACCESS_KEY_ID"] = config["ACCESS"]["AWS_ACCESS_KEY_ID"]
@@ -94,8 +94,7 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                 col("imm_person_gender"),
                 col("imm_visatype"))
 
-    df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView(
-        "imm_personal")
+    df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView("imm_personal")
 
     df_immigration_personal_tmp = spark.sql("SELECT * FROM imm_personal")
 
@@ -150,8 +149,7 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                     col('imm_airline'),
                     col('imm_flight_no'))
 
-        df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView(
-            "immigration_main_information_data")
+        df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView("immigration_main_information_data")
 
         df_immigration_main_information_tmp = spark.sql(
             "SELECT * FROM immigration_main_information_data")
@@ -249,8 +247,7 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
     df_us_cities_demographics = df_us_cities_demographics.withColumn(
         "cidemo_id", monotonically_increasing_id())
 
-    df_us_cities_demographics_temp = df_us_cities_demographics.createOrReplaceTempView(
-        "us_cities_demographics_data")
+    df_us_cities_demographics_temp = df_us_cities_demographics.createOrReplaceTempView("us_cities_demographics_data")
 
     df_us_cities_demographics_temp = spark.sql(
         "SELECT * FROM us_cities_demographics_data")
