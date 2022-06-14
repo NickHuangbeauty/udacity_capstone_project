@@ -64,7 +64,6 @@ DEFAULT_ARGS = {
 #             return 'failed upload files'
 
 
-
 # ******* SPARK_STEPS & JobFlow *******
 # spark-sas7bdat: 2.0.0-s_2.11 -> Scala version: 2.11
 SPARK_STEPS = [
@@ -76,7 +75,7 @@ SPARK_STEPS = [
             "Args": [
                 "spark-submit",
                 "--packages",
-                "saurfang: spark-sas7bdat-2.0.0-s_2.11.jar",
+                "saurfang:spark-sas7bdat:2.0.0-s_2.11",
                 "--deploy-mode",
                 "client",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",

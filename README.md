@@ -28,18 +28,18 @@ s3://mydatapool/data/immigration_data/immigration_labels_descriptions.SAS
 ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-34-214-50-199.us-west-2.compute.amazonaws.com
 
 
-192.168.0.100
-
-
-ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-34-214-21-84.us-west-2.compute.amazonaws.com
-
-ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-54-184-229-213.us-west-2.compute.amazonaws.com
-
-
-ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-54-70-176-2.us-west-2.compute.amazonaws.com
-
-ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-54-201-233-172.us-west-2.compute.amazonaws.com
-
+aws emr add-steps —cluster-id j-3H6EATEWWRWS 
+                  —steps Type=spark,
+                  Name=ParquetConversion,
+                  Args=[ — deploy-mode,
+                           cluster, 
+                         — master,
+                           yarn, 
+                         — conf,
+                           spark.yarn.submit.waitAppCompletion=true,
+                           s3a://test/script/pyspark.py
+                        ],
+                   ActionOnFailure=CONTINUE
 
 
 aws emr create-cluster \
