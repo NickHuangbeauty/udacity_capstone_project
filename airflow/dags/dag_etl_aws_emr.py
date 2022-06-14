@@ -13,9 +13,13 @@ from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.state import State
+from signal import signal, SIGPIPE, SIG_DFL
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
+# ***** Without Catching SIGPIPE *********
+signal(SIGPIPE, SIG_DFL)
+# ****************************************
 
 AWS_CONN_ID = 'aws_conn'
 
@@ -62,14 +66,17 @@ DEFAULT_ARGS = {
 
 
 # ******* SPARK_STEPS & JobFlow *******
+# spark-sas7bdat: 2.0.0-s_2.11 -> Scala version: 2.11
 SPARK_STEPS = [
     {
         "Name": "For Dealing with data and analytics using Spark on AWS EMR",
-        "ActionOnFailure": "CANCEL_AND_WAIT",
+        "ActionOnFailure": "CONTINUE",
         "HadoopJarStep": {
             "Jar": "command-runner.jar",
             "Args": [
                 "spark-submit",
+                "--packages",
+                "saurfang: spark-sas7bdat-2.0.0-s_2.11.jar",
                 "--deploy-mode",
                 "client",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",
@@ -77,6 +84,7 @@ SPARK_STEPS = [
         },
     }
 ]
+
 
 JOB_FLOW_OVERRIDES = {
     "Applications": [
@@ -181,21 +189,21 @@ with DAG(DAG_ID,
         reset_dag_run=True,
         wait_for_completion=True,
         poke_interval=15,
-        allowed_states=[State.SUCCESS, State.RUNNING],
+        allowed_states=[State.SUCCESS],
         failed_states=[State.FAILED, State.UPSTREAM_FAILED]
     )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
-    # trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
-    #     task_id='Trigger_upload_source_data_step',
-    #     trigger_dag_id='dag_upload_data_to_aws_s3',
-    #     execution_date='{{ ds }}',
-    #     reset_dag_run=True,
-    #     wait_for_completion=True,
-    #     poke_interval=15,
-    #     allowed_states=[State.SUCCESS, State.RUNNING],
-    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    # )
+    trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
+        task_id='Trigger_upload_source_data_step',
+        trigger_dag_id='dag_upload_data_to_aws_s3',
+        execution_date='{{ ds }}',
+        reset_dag_run=True,
+        wait_for_completion=True,
+        poke_interval=15,
+        allowed_states=[State.SUCCESS],
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
@@ -222,7 +230,7 @@ with DAG(DAG_ID,
         job_flow_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Create_Emr_Cluster") }}',
         step_id='{{ task_instance.xcom_pull(key="return_value", task_ids="Add_EMR_Step")|last }}',
         aws_conn_id=AWS_CONN_ID,
-        failed_states=[State.FAILED, State.UPSTREAM_FAILED, State.UP_FOR_RETRY]
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
     )
 
     stop_and_remove_emr = EmrTerminateJobFlowOperator(
@@ -240,5 +248,6 @@ with DAG(DAG_ID,
 
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
 
-    start >> postgres_clear_xcom_records >> trigger_upload_etl_emr_to_s3 >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    start >> postgres_clear_xcom_records >> [
+        trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
     # start >> postgres_clear_xcom_records >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end

@@ -3,7 +3,6 @@ from airflow.models import BaseOperator
 from airflow.providers.amazon.aws.hooks.s3 import S3Hook
 
 
-
 class UploadFilesFromLocalToS3(BaseOperator):
     """
     Purpose:
@@ -17,7 +16,7 @@ class UploadFilesFromLocalToS3(BaseOperator):
     :type filename_dict            dictionary
     """
 
-    template_fields: Sequence[str] = ('s3_bucket')
+    # template_fields: Sequence[str] = ('s3_bucket')
 
     # Setting the task background color
     # RPG: 53, 129, 64 -> Green
