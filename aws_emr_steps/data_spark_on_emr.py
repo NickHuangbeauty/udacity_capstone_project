@@ -15,7 +15,7 @@ from pyspark.sql.types import (StructType,
                                FloatType)
 
 # ***** Without Catching SIGPIPE *********
-signal(SIGPIPE,SIG_DFL)
+signal(SIGPIPE, SIG_DFL)
 # ****************************************
 
 
@@ -132,43 +132,43 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     udf_convert_to_datetime = udf(lambda x: convert_to_datetime(x), DateType())
 
     immigration_main_information = df_imm_data.withColumn("imm_main_cic_id", col("cicid").cast("Integer"))\
-            .withColumn("imm_year", col("i94yr").cast("Integer"))\
-            .withColumn("imm_month", col("i94mon").cast("Integer"))\
-            .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
-            .withColumn("imm_visa", col("i94visa").cast("Integer"))\
-            .withColumn("imm_port", col("i94port").cast("String"))\
-            .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
-            .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
-            .withColumn("imm_model", col("i94mode").cast("Integer"))\
-            .withColumn("imm_address", col("i94addr").cast("String"))\
-            .withColumn("imm_airline", col("airline").cast("String"))\
-            .withColumn("imm_flight_no", col("fltno").cast("String"))\
-            .select(col('imm_main_cic_id'),
-                    col('imm_year'),
-                    col('imm_month'),
-                    col('imm_cntyl'),
-                    col('imm_visa'),
-                    col('imm_port'),
-                    col('imm_arrival_date'),
-                    col('imm_departure_date'),
-                    col('imm_model'),
-                    col('imm_address'),
-                    col('imm_airline'),
-                    col('imm_flight_no'))
+        .withColumn("imm_year", col("i94yr").cast("Integer"))\
+        .withColumn("imm_month", col("i94mon").cast("Integer"))\
+        .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
+        .withColumn("imm_visa", col("i94visa").cast("Integer"))\
+        .withColumn("imm_port", col("i94port").cast("String"))\
+        .withColumn("imm_arrival_date", udf_convert_to_datetime(col("arrdate")))\
+        .withColumn("imm_departure_date", udf_convert_to_datetime(col("depdate")))\
+        .withColumn("imm_model", col("i94mode").cast("Integer"))\
+        .withColumn("imm_address", col("i94addr").cast("String"))\
+        .withColumn("imm_airline", col("airline").cast("String"))\
+        .withColumn("imm_flight_no", col("fltno").cast("String"))\
+        .select(col('imm_main_cic_id'),
+                col('imm_year'),
+                col('imm_month'),
+                col('imm_cntyl'),
+                col('imm_visa'),
+                col('imm_port'),
+                col('imm_arrival_date'),
+                col('imm_departure_date'),
+                col('imm_model'),
+                col('imm_address'),
+                col('imm_airline'),
+                col('imm_flight_no'))
 
     df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView(
-            "immigration_main_information_data")
+        "immigration_main_information_data")
 
     df_immigration_main_information_tmp = spark.sql(
-            "SELECT * FROM immigration_main_information_data")
+        "SELECT * FROM immigration_main_information_data")
 
     df_immigration_main_information_tmp.persist()
 
     # df_immigration_main_information_tmp.explain()
 
     df_immigration_main_information_tmp.write.partitionBy("imm_year", "imm_month"). \
-            parquet(
-                mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/immigration_main_information')
+        parquet(
+        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/immigration_main_information')
 
 
 def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
@@ -407,9 +407,10 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
     )
 
     # Saved in AWS S3
-    df_notification.write.partitionBy("news_publish_time"). \
-        parquet(mode="overwrite",
-                path=f'{DEST_S3_BUCKET}/fact_table/notification')
+    df_notification.repartition(12) \
+                   .write.partitionBy("news_publish_time") \
+                         .parquet(mode="overwrite",
+                                  path=f'{DEST_S3_BUCKET}/fact_table/notification')
 
 
 def main():

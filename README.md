@@ -25,7 +25,7 @@ s3://mydatapool/data/immigration_data/immigration_labels_descriptions.SAS
 s3://mydatapool/data/immigration_data/immigration_labels_descriptions.SAS
 
 
-ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-34-214-50-199.us-west-2.compute.amazonaws.com
+ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-35-166-178-17.us-west-2.compute.amazonaws.com
 
 
 aws emr add-steps —cluster-id j-3H6EATEWWRWS 

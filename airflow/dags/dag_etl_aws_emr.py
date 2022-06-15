@@ -165,12 +165,12 @@ with DAG(DAG_ID,
          ) as dag:
 
     # Before start etl, I should remove all xcom records from postgres database
-    postgres_clear_xcom_records = PostgresOperator(
-        task_id='delete_xcom_task',
-        postgres_conn_id='pg_conn',
-        autocommit=True,
-        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
-    )
+    # postgres_clear_xcom_records = PostgresOperator(
+    #     task_id='delete_xcom_task',
+    #     postgres_conn_id='pg_conn',
+    #     autocommit=True,
+    #     sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
+    # )
 
     start = DummyOperator(task_id='Start')
 
@@ -181,28 +181,28 @@ with DAG(DAG_ID,
     # )
 
     # Trigger 1: for upland etl_emr file from local to aws s3
-    trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
-        task_id='Trigger_upload_etl_emr_step',
-        trigger_dag_id='dag_upload_emr_script',
-        execution_date= '{{ ds }}',
-        reset_dag_run=True,
-        wait_for_completion=True,
-        poke_interval=15,
-        allowed_states=[State.SUCCESS],
-        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    )
+    # trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
+    #     task_id='Trigger_upload_etl_emr_step',
+    #     trigger_dag_id='dag_upload_emr_script',
+    #     execution_date= '{{ ds }}',
+    #     reset_dag_run=True,
+    #     wait_for_completion=True,
+    #     poke_interval=15,
+    #     allowed_states=[State.SUCCESS],
+    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    # )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
-    trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
-        task_id='Trigger_upload_source_data_step',
-        trigger_dag_id='dag_upload_data_to_aws_s3',
-        execution_date='{{ ds }}',
-        reset_dag_run=True,
-        wait_for_completion=True,
-        poke_interval=15,
-        allowed_states=[State.SUCCESS],
-        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    )
+    # trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
+    #     task_id='Trigger_upload_source_data_step',
+    #     trigger_dag_id='dag_upload_data_to_aws_s3',
+    #     execution_date='{{ ds }}',
+    #     reset_dag_run=True,
+    #     wait_for_completion=True,
+    #     poke_interval=15,
+    #     allowed_states=[State.SUCCESS],
+    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    # )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
@@ -247,6 +247,6 @@ with DAG(DAG_ID,
 
     # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
 
-    start >> postgres_clear_xcom_records >> [
-        trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
-    # start >> postgres_clear_xcom_records >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    # start >> postgres_clear_xcom_records >> [
+    #     trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    start >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
