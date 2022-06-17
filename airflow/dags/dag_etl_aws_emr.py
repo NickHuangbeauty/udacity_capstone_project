@@ -74,10 +74,12 @@ SPARK_STEPS = [
             "Jar": "command-runner.jar",
             "Args": [
                 "spark-submit",
-                "--packages",
-                "saurfang:spark-sas7bdat:2.0.0-s_2.11",
+                "--master",
+                "yarn",
                 "--deploy-mode",
                 "client",
+                "--packages",
+                "saurfang:spark-sas7bdat:2.0.0-s_2.11",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",
             ],
         },
@@ -122,14 +124,14 @@ JOB_FLOW_OVERRIDES = {
             {
                 "InstanceCount": 1,
                 "InstanceRole": "MASTER",
-                "InstanceType": "m5.xlarge",
+                "InstanceType": "r6gd.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Primary_Node"
             },
             {
                 "InstanceCount": 2,
                 "InstanceRole": "CORE",
-                "InstanceType": "m5.xlarge",
+                "InstanceType": "r6gd.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Core_Node_2"
             }

@@ -63,11 +63,11 @@ def create_spark_session():
         .config("spark.jars.packages", "saurfang:spark-sas7bdat:2.0.0-s_2.11") \
         .getOrCreate()
 
-    spark.conf.set("spark.sql.shuffle.partitions", "200")
+    # spark.conf.set("spark.sql.shuffle.partitions", "100")
 
-    logging.info("Spark information: {spark}")
+    print(f"Spark information: {spark}")
 
-    logging.info(spark.sparkContext.getConf().getAll())
+    print(f"{spark.sparkContext.getConf().getAll()}")
 
     return spark
 
@@ -106,13 +106,14 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     df_immigration_personal_tmp = spark.sql("SELECT * FROM imm_personal")
 
-    df_immigration_personal_tmp.persist()
+    # df_immigration_personal_tmp.persist()
 
     # df_immigration_personal_tmp.explain()
 
-    df_immigration_personal_tmp.write.partitionBy("imm_person_birth_year"). \
-        parquet(
-            mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/df_immigration_personal')
+    numPartitions = 100
+    df_immigration_personal_tmp.repartition(numPartitions) \
+                               .write.partitionBy("imm_person_birth_year") \
+                               .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/df_immigration_personal')
 
     # Dimension Table: Immigration main data
     def convert_to_datetime(days: DoubleType) -> datetime:
@@ -162,13 +163,14 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     df_immigration_main_information_tmp = spark.sql(
         "SELECT * FROM immigration_main_information_data")
 
-    df_immigration_main_information_tmp.persist()
+    # df_immigration_main_information_tmp.persist()
 
     # df_immigration_main_information_tmp.explain()
-
-    df_immigration_main_information_tmp.write.partitionBy("imm_year", "imm_month"). \
-        parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/immigration_main_information')
+    numPartitions = 100
+    df_immigration_main_information_tmp.repartition(numPartitions) \
+        .write.partitionBy("imm_year", "imm_month"). \
+        parquet(mode="overwrite",
+                path=f'{DEST_S3_BUCKET}/dimension_table/immigration_main_information')
 
 
 def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
@@ -206,14 +208,15 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
     df_news_tmp = df_news.createOrReplaceTempView("news_article_data")
 
     df_news_tmp = spark.sql(
-        "SELECT * FROM news_article_data")
+        "SELECT * FROM news_article_data WHERE news_publish_time BETWEEN '2016-01-01' AND '2016-12-31'")
 
-    df_news_tmp.persist()
+    # df_news_tmp.persist()
 
     # df_news_tmp.explain()
-    df_news_tmp.write.partitionBy("news_publish_time"). \
-        parquet(mode="overwrite",
-                path=f'{DEST_S3_BUCKET}/dimension_table/news_article_data')
+    numPartitions = 100
+    df_news_tmp.repartition(numPartitions) \
+               .write.partitionBy("news_publish_time") \
+               .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/news_article_data')
 
 
 def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
@@ -261,12 +264,13 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
     df_us_cities_demographics_temp = spark.sql(
         "SELECT * FROM us_cities_demographics_data")
 
-    df_us_cities_demographics_temp.persist()
+    # df_us_cities_demographics_temp.persist()
 
     # df_us_cities_demographics_temp.explain()
-
-    df_us_cities_demographics_temp.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/us_cities_demographics_data')
+    numPartitions = 100
+    df_us_cities_demographics_temp.repartition(numPartitions) \
+                                  .write \
+                                  .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/us_cities_demographics_data')
 
 
 def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
@@ -326,7 +330,7 @@ def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> Non
         "imm_destination_city_data")
     df_imm_destination_city_tmp = spark.sql(
         "SELECT * FROM imm_destination_city_data")
-    df_imm_destination_city_tmp.persist()
+    # df_imm_destination_city_tmp.persist()
     # Saved in AWS S3
     df_imm_destination_city_tmp.write.parquet(
         mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_destination_city')
@@ -378,17 +382,30 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
         SOURCE_S3_BUCKET (_type_): _description_
         DEST_S3_BUCKET (_type_): _description_
     """
+
+    t1 = spark.sql(
+       " \
+        SELECT * \
+          FROM immigration_main_information_data imid \
+             INNER JOIN imm_personal ip \
+                    ON imid.imm_main_cic_id = ip.imm_per_cic_id \
+                 WHERE imid.imm_year = 2016 \
+       "
+    )
+    
+    
+    
     df_notification = spark.sql(
         "WITH t1 AS \
             (SELECT * \
                FROM immigration_main_information_data imid \
-             LEFT JOIN imm_personal ip \
+             INNER JOIN imm_personal ip \
                     ON imid.imm_main_cic_id = ip.imm_per_cic_id \
                  WHERE imid.imm_year = 2016 \
             ), t2 AS \
                 (SELECT * \
                    FROM t1 \
-                 LEFT JOIN news_article_data nad \
+                 INNER JOIN news_article_data nad \
                         ON t1.imm_arrival_date = nad.news_publish_time \
             ) \
             SELECT  t2.imm_main_cic_id \
@@ -401,13 +418,22 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
                    ,t2.news_publish_time \
                    ,t2.news_authors \
               FROM t2 \
-            LEFT JOIN (SELECT * FROM us_cities_demographics_data ucdd INNER JOIN imm_destination_city_data idcd ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city) src \
+            INNER JOIN (SELECT * \
+                          FROM us_cities_demographics_data ucdd \
+                        INNER JOIN imm_destination_city_data idcd \
+                                ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city \
+                         WHERE ucdd.cidemo_count >= 50000 \
+                           AND ROUND(ucdd.cidemo_median_age, 0) BETWEEN 30 AND 60 ) src \
                    ON t2.imm_port = src.code_of_imm_destination_city \
+             WHERE t2.news_title is not null \
+               AND t2.news_abstract is not null \
+               AND t2.news_publish_time BETWEEN '2016-04-01' AND '2016-05-01'\
         "
     )
 
     # Saved in AWS S3
-    df_notification.repartition(12) \
+    numPartitions = 500
+    df_notification.repartition(numPartitions) \
                    .write.partitionBy("news_publish_time") \
                          .parquet(mode="overwrite",
                                   path=f'{DEST_S3_BUCKET}/fact_table/notification')
