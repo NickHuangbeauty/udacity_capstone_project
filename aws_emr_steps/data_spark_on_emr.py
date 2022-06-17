@@ -5,7 +5,7 @@ import boto3
 from datetime import datetime, timedelta
 from pyspark.sql import SparkSession
 from signal import signal, SIGPIPE, SIG_DFL
-from pyspark.sql.functions import col, monotonically_increasing_id, udf, to_date
+from pyspark.sql.functions import col, monotonically_increasing_id, udf, to_date, round
 from pyspark.sql.types import (StructType,
                                StructField,
                                StringType,
@@ -72,7 +72,7 @@ def create_spark_session():
     return spark
 
 
-def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
     """process_dim_immigration _summary_
 
     _extended_summary_
@@ -86,9 +86,9 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
         _type_: _description_
     """
     imm_path = os.path.join(
-        SOURCE_S3_BUCKET, "data/immigration_data/immigration_apr16_sub.sas7bdat")
+        source_s3_bucket, "data/immigration_data/immigration_apr16_sub.sas7bdat")
 
-    df_imm_data = spark.read.format(
+    df_imm_data = spark_session.read.format(
         "com.github.saurfang.sas.spark").load(imm_path)
 
     # Dimension Table: Immigration personal data
@@ -101,19 +101,19 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                 col("imm_person_gender"),
                 col("imm_visatype"))
 
-    df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView(
-        "imm_personal")
+    # df_immigration_personal_tmp = df_immigration_personal.createOrReplaceTempView(
+    #     "imm_personal")
 
-    df_immigration_personal_tmp = spark.sql("SELECT * FROM imm_personal")
+    # df_immigration_personal_tmp = spark.sql("SELECT * FROM imm_personal")
 
     # df_immigration_personal_tmp.persist()
 
     # df_immigration_personal_tmp.explain()
 
     numPartitions = 100
-    df_immigration_personal_tmp.repartition(numPartitions) \
+    df_immigration_personal.repartition(numPartitions) \
                                .write.partitionBy("imm_person_birth_year") \
-                               .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/df_immigration_personal')
+                               .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/df_immigration_personal')
 
     # Dimension Table: Immigration main data
     def convert_to_datetime(days: DoubleType) -> datetime:
@@ -132,7 +132,7 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
 
     udf_convert_to_datetime = udf(lambda x: convert_to_datetime(x), DateType())
 
-    immigration_main_information = df_imm_data.withColumn("imm_main_cic_id", col("cicid").cast("Integer"))\
+    df_immigration_main_information = df_imm_data.withColumn("imm_main_cic_id", col("cicid").cast("Integer"))\
         .withColumn("imm_year", col("i94yr").cast("Integer"))\
         .withColumn("imm_month", col("i94mon").cast("Integer"))\
         .withColumn("imm_cntyl", col("i94cit").cast("Integer"))\
@@ -157,23 +157,24 @@ def process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                 col('imm_airline'),
                 col('imm_flight_no'))
 
-    df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView(
-        "immigration_main_information_data")
+    # df_immigration_main_information_tmp = immigration_main_information.createOrReplaceTempView(
+    #     "immigration_main_information_data")
 
-    df_immigration_main_information_tmp = spark.sql(
-        "SELECT * FROM immigration_main_information_data")
+    # df_immigration_main_information_tmp = spark.sql(
+    #     "SELECT * FROM immigration_main_information_data")
 
     # df_immigration_main_information_tmp.persist()
 
     # df_immigration_main_information_tmp.explain()
     numPartitions = 100
-    df_immigration_main_information_tmp.repartition(numPartitions) \
+    df_immigration_main_information.repartition(numPartitions) \
         .write.partitionBy("imm_year", "imm_month"). \
         parquet(mode="overwrite",
                 path=f'{DEST_S3_BUCKET}/dimension_table/immigration_main_information')
+    return df_immigration_main_information, df_immigration_personal
 
 
-def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+def process_dim_news(spark_session, source_s3_bucket, dest_s3_bucket):
     """process_dim_news _summary_
 
     _extended_summary_
@@ -183,10 +184,9 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
         SOURCE_S3_BUCKET (_type_): _description_
         DEST_S3_BUCKET (_type_): _description_
     """
-    news_path = os.path.join(SOURCE_S3_BUCKET, "data/news_data/metadata.csv")
+    news_path = os.path.join(source_s3_bucket, "data/news_data/metadata.csv")
 
-    df_news = spark.read.options(
-        header=True, delimiter=',').csv(path=news_path)
+    df_news = spark_session.read.options(header=True, delimiter=',').csv(path=news_path)
 
     df_news = df_news.withColumn("news_cord_uid", col("cord_uid").cast("String")) \
         .withColumn("news_source", col("source_x").cast("String")) \
@@ -205,21 +205,23 @@ def process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
                 col("news_authors"),
                 col("news_url"))
 
-    df_news_tmp = df_news.createOrReplaceTempView("news_article_data")
+    # df_news_tmp = df_news.createOrReplaceTempView("news_article_data")
 
-    df_news_tmp = spark.sql(
-        "SELECT * FROM news_article_data WHERE news_publish_time BETWEEN '2016-01-01' AND '2016-12-31'")
+    # df_news_tmp = spark.sql(
+    #     "SELECT * FROM news_article_data WHERE news_publish_time BETWEEN '2016-01-01' AND '2016-12-31'")
 
     # df_news_tmp.persist()
 
     # df_news_tmp.explain()
     numPartitions = 100
-    df_news_tmp.repartition(numPartitions) \
+    df_news.repartition(numPartitions) \
                .write.partitionBy("news_publish_time") \
-               .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/news_article_data')
+               .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/news_article_data')
+
+    return df_news
 
 
-def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+def process_dim_us_cities_demographics(spark_session, source_s3_bucket, dest_s3_bucket):
     """process_dim_us_cities_demographics _summary_
 
     _extended_summary_
@@ -229,11 +231,9 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
         SOURCE_S3_BUCKET (_type_): _description_
         DEST_S3_BUCKET (_type_): _description_
     """
-    us_cities_demographics_path = os.path.join(
-        SOURCE_S3_BUCKET, "data/usCitiesDemographics_data/usCitiesDemo.csv")
+    us_cities_demographics_path = os.path.join(source_s3_bucket, "data/usCitiesDemographics_data/usCitiesDemo.csv")
 
-    df_us_cities_demographics = spark.read.options(
-        header=True, delimiter=';').csv(us_cities_demographics_path)
+    df_us_cities_demographics = spark_session.read.options(header=True, delimiter=';').csv(us_cities_demographics_path)
 
     df_us_cities_demographics = df_us_cities_demographics.withColumn("cidemo_city", col("City").cast("String")) \
         .withColumn("cidemo_state", col("State").cast("String")) \
@@ -258,22 +258,24 @@ def process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET) 
     df_us_cities_demographics = df_us_cities_demographics.withColumn(
         "cidemo_id", monotonically_increasing_id())
 
-    df_us_cities_demographics_temp = df_us_cities_demographics.createOrReplaceTempView(
-        "us_cities_demographics_data")
+    # df_us_cities_demographics_temp = df_us_cities_demographics.createOrReplaceTempView(
+    #     "us_cities_demographics_data")
 
-    df_us_cities_demographics_temp = spark.sql(
-        "SELECT * FROM us_cities_demographics_data")
+    # df_us_cities_demographics_temp = spark.sql(
+    #     "SELECT * FROM us_cities_demographics_data")
 
     # df_us_cities_demographics_temp.persist()
 
     # df_us_cities_demographics_temp.explain()
     numPartitions = 100
-    df_us_cities_demographics_temp.repartition(numPartitions) \
+    df_us_cities_demographics.repartition(numPartitions) \
                                   .write \
-                                  .parquet(mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/us_cities_demographics_data')
+                                  .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/us_cities_demographics_data')
+                                
+    return df_us_cities_demographics
 
 
-def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> None:
+def process_dim_label(spark_session, s3_access, dest_s3_bucket):
     """process_dim_label _summary_
 
     _extended_summary_
@@ -309,51 +311,50 @@ def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> Non
     # ***** imm_cit_res *****
     imm_cit_res_two, imm_cit_res_three = code_mapping(context, "i94cntyl")
 
-    df_imm_city_res_label = spark.sparkContext.parallelize(imm_cit_res_three).toDF(["col_of_imm_cntyl", "value_of_imm_cntyl", "value_of_imm_cntyl_organizations"]) \
+    df_imm_city_res_label = spark_session.sparkContext.parallelize(imm_cit_res_three).toDF(["col_of_imm_cntyl", "value_of_imm_cntyl", "value_of_imm_cntyl_organizations"]) \
         .withColumn("col_of_imm_cntyl", col("col_of_imm_cntyl").cast("Integer")) \
         .withColumn("value_of_imm_cntyl", col("value_of_imm_cntyl").cast("String")) \
         .withColumn("value_of_imm_cntyl", col("value_of_imm_cntyl_organizations").cast("String")) \
 
     # Saved in AWS S3
     df_imm_city_res_label.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_city_res_label')
+        mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/imm_city_res_label')
     # **********************
 
     # ***** imm_port *****
     imm_port_two, imm_port_three = code_mapping(context, "i94prtl")
-    df_imm_destination_city = spark.sparkContext.parallelize(imm_port_three).toDF(["code_of_imm_destination_city", "value_of_imm_destination_city", "value_of_alias_imm_destination_city"]) \
+    df_imm_destination_city = spark_session.sparkContext.parallelize(imm_port_three).toDF(["code_of_imm_destination_city", "value_of_imm_destination_city", "value_of_alias_imm_destination_city"]) \
                                                 .withColumn("code_of_imm_destination_city", col("code_of_imm_destination_city").cast("String")) \
                                                 .withColumn("value_of_imm_destination_city", col("value_of_imm_destination_city").cast("String")) \
                                                 .withColumn("value_of_alias_imm_destination_city", col("value_of_alias_imm_destination_city").cast("String"))
     # For querying and joining other tables.
-    df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView(
-        "imm_destination_city_data")
-    df_imm_destination_city_tmp = spark.sql(
-        "SELECT * FROM imm_destination_city_data")
+    # df_imm_destination_city_tmp = df_imm_destination_city.createOrReplaceTempView(
+    #     "imm_destination_city_data")
+    # df_imm_destination_city_tmp = spark.sql(
+    #     "SELECT * FROM imm_destination_city_data")
     # df_imm_destination_city_tmp.persist()
     # Saved in AWS S3
-    df_imm_destination_city_tmp.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_destination_city')
+    df_imm_destination_city.write.parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/imm_destination_city')
     # ********************
 
     # ***** imm_mod *****
     imm_mode_two, imm_mode_three = code_mapping(context, "i94model")
-    df_imm_travel_code = spark.sparkContext.parallelize(imm_mode_two).toDF(["code_of_imm_travel_code", "value_of_imm_travel_code"]) \
+    df_imm_travel_code = spark_session.sparkContext.parallelize(imm_mode_two).toDF(["code_of_imm_travel_code", "value_of_imm_travel_code"]) \
                                            .withColumn("code_of_imm_travel_code", col("code_of_imm_travel_code").cast("Integer")) \
                                            .withColumn("value_of_imm_travel_code", col("value_of_imm_travel_code").cast("String"))
     # Saved in AWS S3
     df_imm_travel_code.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_travel_code')
+        mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/imm_travel_code')
     # *******************
 
     # ***** imm_addr *****
     imm_addr_two, imm_addr_three = code_mapping(context, "i94addrl")
-    df_imm_address = spark.sparkContext.parallelize(imm_addr_two).toDF(["code_of_imm_address", "value_of_imm_address"]) \
+    df_imm_address = spark_session.sparkContext.parallelize(imm_addr_two).toDF(["code_of_imm_address", "value_of_imm_address"]) \
         .withColumn("code_of_imm_address", col("code_of_imm_address").cast("String")) \
         .withColumn("value_of_imm_address", col("value_of_imm_address").cast("String"))
     # Saved in AWS S3
     df_imm_address.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_address')
+        mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/imm_address')
     # ********************
 
     # ***** imm_visa *****
@@ -361,16 +362,22 @@ def process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET) -> Non
                 '2': 'Pleasure',
                 '3': 'Student'}
 
-    df_imm_visa = spark.sparkContext.parallelize(imm_visa.items()).toDF(["code_of_imm_visa", "value_of_imm_visa"]) \
+    df_imm_visa = spark_session.sparkContext.parallelize(imm_visa.items()).toDF(["code_of_imm_visa", "value_of_imm_visa"]) \
                                     .withColumn("code_of_imm_visa", col("code_of_imm_visa").cast("Integer")) \
                                     .withColumn("value_of_imm_visa", col("value_of_imm_visa").cast("String"))
     # Saved in AWS S3
-    df_imm_visa.write.parquet(
-        mode="overwrite", path=f'{DEST_S3_BUCKET}/dimension_table/imm_visa')
+    df_imm_visa.write.parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/imm_visa')
     # ********************
 
+    return df_imm_destination_city
 
-def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
+
+def process_fact_notifications(dest_s3_bucket,
+                               imm_information,
+                               imm_personal,
+                               news_article_data,
+                               us_cities_demographics_data,
+                               imm_destination_city_data) -> None:
     """process_fact_notifications _summary_
 
     _extended_summary_
@@ -383,60 +390,59 @@ def process_fact_notifications(spark, DEST_S3_BUCKET) -> None:
         DEST_S3_BUCKET (_type_): _description_
     """
 
-    t1 = spark.sql(
-       " \
-        SELECT * \
-          FROM immigration_main_information_data imid \
-             INNER JOIN imm_personal ip \
-                    ON imid.imm_main_cic_id = ip.imm_per_cic_id \
-                 WHERE imid.imm_year = 2016 \
-       "
-    )
-    
-    
-    
-    df_notification = spark.sql(
-        "WITH t1 AS \
-            (SELECT * \
-               FROM immigration_main_information_data imid \
-             INNER JOIN imm_personal ip \
-                    ON imid.imm_main_cic_id = ip.imm_per_cic_id \
-                 WHERE imid.imm_year = 2016 \
-            ), t2 AS \
-                (SELECT * \
-                   FROM t1 \
-                 INNER JOIN news_article_data nad \
-                        ON t1.imm_arrival_date = nad.news_publish_time \
-            ) \
-            SELECT  t2.imm_main_cic_id \
-                   ,t2.imm_per_cic_id \
-                   ,t2.news_cord_uid \
-                   ,src.cidemo_id \
-                   ,src.value_of_imm_destination_city \
-                   ,t2.news_title \
-                   ,t2.news_abstract \
-                   ,t2.news_publish_time \
-                   ,t2.news_authors \
-              FROM t2 \
-            INNER JOIN (SELECT * \
-                          FROM us_cities_demographics_data ucdd \
-                        INNER JOIN imm_destination_city_data idcd \
-                                ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city \
-                         WHERE ucdd.cidemo_count >= 50000 \
-                           AND ROUND(ucdd.cidemo_median_age, 0) BETWEEN 30 AND 60 ) src \
-                   ON t2.imm_port = src.code_of_imm_destination_city \
-             WHERE t2.news_title is not null \
-               AND t2.news_abstract is not null \
-               AND t2.news_publish_time BETWEEN '2016-04-01' AND '2016-05-01'\
-        "
-    )
+    t1 = imm_information.join(imm_personal, imm_information.imm_main_cic_id == imm_personal.imm_per_cic_id, "inner")
+
+    t2 = t1.join(news_article_data, t1.imm_arrival_date == news_article_data.news_publish_time, "inner")
+
+    us_cities_dest = us_cities_demographics_data.join(imm_destination_city_data, us_cities_demographics_data.cidemo_state_code ==
+                                                      imm_destination_city_data.value_of_alias_imm_destination_city, "inner").filter(us_cities_demographics_data.cidemo_count >= 50000) & (round(us_cities_demographics_data.cidemo_median_age, 0).between(30, 60))
+
+    df_notification = t2.join(us_cities_dest, t2.imm_port == us_cities_dest.code_of_imm_destination_city).filter(t2.news_publish_time.between('2016-04-01', '2016-05-01'))
+
+
+
+    # df_notification = spark_session.sql(
+    #     "WITH t1 AS \
+    #         (SELECT * \
+    #            FROM immigration_main_information_data imid \
+    #          INNER JOIN imm_personal ip \
+    #                 ON imid.imm_main_cic_id = ip.imm_per_cic_id \
+    #              WHERE imid.imm_year = 2016 \
+    #         ), t2 AS \
+    #             (SELECT * \
+    #                FROM t1 \
+    #              INNER JOIN news_article_data nad \
+    #                     ON t1.imm_arrival_date = nad.news_publish_time \
+    #         ) \
+    #         SELECT  t2.imm_main_cic_id \
+    #                ,t2.imm_per_cic_id \
+    #                ,t2.news_cord_uid \
+    #                ,src.cidemo_id \
+    #                ,src.value_of_imm_destination_city \
+    #                ,t2.news_title \
+    #                ,t2.news_abstract \
+    #                ,t2.news_publish_time \
+    #                ,t2.news_authors \
+    #           FROM t2 \
+    #         INNER JOIN (SELECT * \
+    #                       FROM us_cities_demographics_data ucdd \
+    #                     INNER JOIN imm_destination_city_data idcd \
+    #                             ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city \
+    #                      WHERE ucdd.cidemo_count >= 50000 \
+    #                        AND ROUND(ucdd.cidemo_median_age, 0) BETWEEN 30 AND 60 ) src \
+    #                ON t2.imm_port = src.code_of_imm_destination_city \
+    #          WHERE t2.news_title is not null \
+    #            AND t2.news_abstract is not null \
+    #            AND t2.news_publish_time BETWEEN '2016-04-01' AND '2016-05-01'\
+    #     "
+    # )
 
     # Saved in AWS S3
     numPartitions = 500
     df_notification.repartition(numPartitions) \
                    .write.partitionBy("news_publish_time") \
                          .parquet(mode="overwrite",
-                                  path=f'{DEST_S3_BUCKET}/fact_table/notification')
+                                  path=f'{dest_s3_bucket}/fact_table/notification')
 
 
 def main():
@@ -445,19 +451,24 @@ def main():
     spark = create_spark_session()
 
     # Process data for creating dimension table: immigration
-    process_dim_immigration(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
+    df_immMainInfo, df_immPersonal = process_dim_immigration(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
 
     # Process data for creating dimension table: news
-    process_dim_news(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
+    df_news = process_dim_news(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
 
     # Process data for creating dimension table: us cities Demographics
-    process_dim_us_cities_demographics(spark, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
+    df_demo = process_dim_us_cities_demographics(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
 
     # Process data for creating dimension table: label for immigration
-    process_dim_label(spark, s3_access, SOURCE_S3_BUCKET, DEST_S3_BUCKET)
+    df_dest_city = process_dim_label(spark_session=spark, s3_access=s3_access, dest_s3_bucket=DEST_S3_BUCKET)
 
     # Process data for creating fact table: notifications
-    process_fact_notifications(spark, DEST_S3_BUCKET)
+    process_fact_notifications(dest_s3_bucket=DEST_S3_BUCKET,
+                               imm_information=df_immMainInfo,
+                               imm_personal=df_immPersonal,
+                               news_article_data=df_news,
+                               us_cities_demographics_data=df_demo,
+                               imm_destination_city_data=df_dest_city)
 
 
 if __name__ == "__main__":
