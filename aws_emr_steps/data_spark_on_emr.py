@@ -395,7 +395,8 @@ def process_fact_notifications(dest_s3_bucket,
     t2 = t1.join(news_article_data, t1.imm_arrival_date == news_article_data.news_publish_time, "inner")
 
     us_cities_dest = us_cities_demographics_data.join(imm_destination_city_data, us_cities_demographics_data.cidemo_state_code ==
-                                                      imm_destination_city_data.value_of_alias_imm_destination_city, "inner").filter(us_cities_demographics_data.cidemo_count >= 50000) & (round(us_cities_demographics_data.cidemo_median_age, 0).between(30, 60))
+                                                      imm_destination_city_data.value_of_alias_imm_destination_city, "inner").\
+                                                          filter(us_cities_demographics_data.cidemo_count >= 50000 & round(us_cities_demographics_data.cidemo_median_age, 0).between(30, 60))
 
     df_notification = t2.join(us_cities_dest, t2.imm_port == us_cities_dest.code_of_imm_destination_city).filter(t2.news_publish_time.between('2016-04-01', '2016-05-01'))
 
@@ -451,7 +452,7 @@ def main():
     spark = create_spark_session()
 
     # Process data for creating dimension table: immigration
-    df_immMainInfo, df_immPersonal = process_dim_immigration(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
+    df_imm_main_info, df_imm_person = process_dim_immigration(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
 
     # Process data for creating dimension table: news
     df_news = process_dim_news(spark_session=spark, source_s3_bucket=SOURCE_S3_BUCKET, dest_s3_bucket=DEST_S3_BUCKET)
@@ -464,8 +465,8 @@ def main():
 
     # Process data for creating fact table: notifications
     process_fact_notifications(dest_s3_bucket=DEST_S3_BUCKET,
-                               imm_information=df_immMainInfo,
-                               imm_personal=df_immPersonal,
+                               imm_information=df_imm_main_info,
+                               imm_personal=df_imm_person,
                                news_article_data=df_news,
                                us_cities_demographics_data=df_demo,
                                imm_destination_city_data=df_dest_city)
