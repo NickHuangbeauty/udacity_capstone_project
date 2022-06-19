@@ -16,7 +16,7 @@
     },
 ssh -i ~/.ssh/nick_key_pair.pem hadoop@ec2-54-71-196-102.us-west-2.compute.amazonaws.com
 
-spark-submit --deploy-mode client --executor-memory 10G --packages "saurfang:spark-sas7bdat:2.0.0-s_2.11" s3://mydatapool/upload_data/script/data_spark_on_emr.py
+spark-submit --deploy-mode client --packages "saurfang:spark-sas7bdat:2.0.0-s_2.11" s3://mydatapool/upload_data/script/data_spark_on_emr.py
 
 
 aws s3 cp s3://mydatapool/config/dl.cfg /home/hadoop/.aws/dl.cfg

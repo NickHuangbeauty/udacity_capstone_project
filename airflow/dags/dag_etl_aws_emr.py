@@ -74,12 +74,10 @@ SPARK_STEPS = [
             "Jar": "command-runner.jar",
             "Args": [
                 "spark-submit",
-                "--master",
-                "yarn",
-                "--deploy-mode",
-                "client",
                 "--packages",
                 "saurfang:spark-sas7bdat:2.0.0-s_2.11",
+                "--deploy-mode",
+                "client",
                 "s3://{{ var.value.Data_Bucket }}/upload_data/script/data_spark_on_emr.py",
             ],
         },
@@ -88,6 +86,8 @@ SPARK_STEPS = [
 
 
 JOB_FLOW_OVERRIDES = {
+    "Name": "Udacity_Capstone_ETL_On_EMR",
+    "ReleaseLabel": "emr-5.36.0",
     "Applications": [
         {
             "Name": "Hadoop"
@@ -124,14 +124,14 @@ JOB_FLOW_OVERRIDES = {
             {
                 "InstanceCount": 1,
                 "InstanceRole": "MASTER",
-                "InstanceType": "r6gd.xlarge",
+                "InstanceType": "m5.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Primary_Node"
             },
             {
                 "InstanceCount": 2,
                 "InstanceRole": "CORE",
-                "InstanceType": "r6gd.xlarge",
+                "InstanceType": "m5.xlarge",
                 "Market": "ON_DEMAND",
                 "Name": "Core_Node_2"
             }
@@ -141,8 +141,6 @@ JOB_FLOW_OVERRIDES = {
     },
     "JobFlowRole": "{{ var.value.Job_Flow_Role }}",
     "LogUri": "s3://{{ var.value.Log_Bucket }}/emrlogs/",
-    "Name": "Udacity_Capstone_Spark_On_EMR",
-    "ReleaseLabel": "emr-5.36.0",
     "ServiceRole": "{{ var.value.Service_Role }}",
     "VisibleToAllUsers": True
 }
