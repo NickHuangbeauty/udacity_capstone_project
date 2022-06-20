@@ -13,3 +13,7 @@ practice.txt
 # airflow/dags/xcom_dag.py
 airflow/test.sql
 bootstrap_emr.sh
+airflow/dags/dag_etl_aws_emr_org.py
+airflow/dest_data/
+airflow/sample_data/
+airflow/sql/
