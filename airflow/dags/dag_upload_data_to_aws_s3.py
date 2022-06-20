@@ -55,12 +55,6 @@ each_file = [re.search(r'(^.+\.)', files[i])[0] + str(i)
 files_path = list(zip(each_file, s3_key_filename, filepath_all))
 # ************************************************************************
 
-# ******************** Access sas jars file by filepath **********************
-SAS_JARS_FILEPATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/jars/'
-dict_sas_jars_info = dict([os.path.join(root, file_), file_.split(r".jar")[0]]for root, dirs, files in os.walk(
-    SAS_JARS_FILEPATH) for file_ in files if file_.endswith('.jar'))
-# ****************************************************************************
-
 # ******************** Access config file by filepath **********************
 CONFIG_FILE_PATH = '/Users/oneforall_nick/workspace/Udacity_capstone_project/cfg'
 dict_config_info = dict([os.path.join(root, file_), file_.split(".")[0]]for root, dirs, files in os.walk(
@@ -117,20 +111,6 @@ with DAG(DAG_ID,
                 )
 
         logging.info("Completely to upload files to aws s3: config file")
-
-        logging.info("Start to upload files to aws s3: jar file")
-
-        for i in dict_sas_jars_info.items():
-            upload_jar_file = UploadFilesFromLocalToS3(
-                task_id=f"upload_{i[1]}_from_local_to_s3",
-                s3_bucket=Data_Bucket,
-                s3_key=f'upload_data/jars/{i[1]}.jar',
-                filename_dict={i[0]: i[1]},
-                aws_conn_id=AWS_CONN_ID,
-                replace=True
-                )
-
-        logging.info("Completely to upload files to aws s3: jar file")
 
         logging.info("Start to upload files to aws s3: bootstrap_emr file")
 

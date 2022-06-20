@@ -10,12 +10,10 @@ from airflow.providers.amazon.aws.operators.emr_add_steps import EmrAddStepsOper
 from airflow.providers.amazon.aws.operators.emr_create_job_flow import EmrCreateJobFlowOperator
 from airflow.providers.amazon.aws.operators.emr_terminate_job_flow import EmrTerminateJobFlowOperator
 from airflow.providers.amazon.aws.sensors.emr_step import EmrStepSensor
-from airflow.operators.python import BranchPythonOperator
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.utils.state import State
 from signal import signal, SIGPIPE, SIG_DFL
 from airflow.providers.postgres.operators.postgres import PostgresOperator
-from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 
 # ***** Without Catching SIGPIPE *********
 signal(SIGPIPE, SIG_DFL)
@@ -43,25 +41,6 @@ DEFAULT_ARGS = {
     'retry_delay': timedelta(minutes=3),
     'email_on_retry': False
 }
-# def how_to_do_branch(**context) -> str:
-#     # TODO: Dealing with is xcom_pull!!
-#     """
-#     Purpose:
-#         Check json files are available to upload to aws s3.
-
-#     Returns:
-#         str: files are success uploaded to s3: return completed upload files
-#              files are not success uploaded to s3: return failed upload files
-#     """
-#     fetched_upload_filename = context['task_instance'].xcom_pull(key=['job_flow_overrides', 'aws_emr_steps'],
-#                                                                  task_id=['upload_job_config_json_file_from_local_to_s3',
-#                                                                           'upload_spark_step_json_file_from_local_to_s3'])
-#     for filename in range(len(fetched_upload_filename)):
-#         if fetched_upload_filename[filename] in ['job_flow_overrides', 'aws_emr_steps']:
-
-#             return 'completed upload files'
-#         else:
-#             return 'failed upload files'
 
 
 # ******* SPARK_STEPS & JobFlow *******
@@ -164,45 +143,39 @@ with DAG(DAG_ID,
          tags=['main, aws_emr_to_s3, ETL, Pyspark, EMR']
          ) as dag:
 
-    # Before start etl, I should remove all xcom records from postgres database
-    # postgres_clear_xcom_records = PostgresOperator(
-    #     task_id='delete_xcom_task',
-    #     postgres_conn_id='pg_conn',
-    #     autocommit=True,
-    #     sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
-    # )
-
     start = DummyOperator(task_id='Start')
 
-    # Check if json files are uploaded from local to AWS S3 or not!
-    # how_to_do_next_step = BranchPythonOperator(
-    #     task_id='how_to_do_branch',
-    #     python_callable=how_to_do_branch,
-    # )
+    # Before start etl, I should remove all xcom records from postgres database
+    postgres_clear_xcom_records = PostgresOperator(
+        task_id='delete_xcom_task',
+        postgres_conn_id='pg_conn',
+        autocommit=True,
+        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
+    )
 
     # Trigger 1: for upland etl_emr file from local to aws s3
-    # trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
-    #     task_id='Trigger_upload_etl_emr_step',
-    #     trigger_dag_id='dag_upload_emr_script',
-    #     execution_date= '{{ ds }}',
-    #     reset_dag_run=True,
-    #     wait_for_completion=True,
-    #     poke_interval=15,
-    #     allowed_states=[State.SUCCESS],
-    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    # )
+    trigger_upload_etl_emr_to_s3 = TriggerDagRunOperator(
+        task_id='Trigger_upload_etl_emr_step',
+        trigger_dag_id='dag_upload_emr_script',
+        execution_date= '{{ ds }}',
+        reset_dag_run=True,
+        wait_for_completion=True,
+        poke_interval=15,
+        allowed_states=[State.SUCCESS],
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    )
 
     # Trigger 2: for upland source and sas jars data from local to aws s3
-    # trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
-    #     task_id='Trigger_upload_source_data_step',
-    #     trigger_dag_id='dag_upload_data_to_aws_s3',
-    #     execution_date='{{ ds }}',
-    #     reset_dag_run=True,
-    #     wait_for_completion=True,
-    #     poke_interval=15,
-    #     allowed_states=[State.SUCCESS],
-    #     failed_states=[State.FAILED, State.UPSTREAM_FAILED]
-    # )
+    trigger_upload_source_data_to_s3 = TriggerDagRunOperator(
+        task_id='Trigger_upload_source_data_step',
+        trigger_dag_id='dag_upload_data_to_aws_s3',
+        execution_date='{{ ds }}',
+        reset_dag_run=True,
+        wait_for_completion=True,
+        poke_interval=15,
+        allowed_states=[State.SUCCESS],
+        failed_states=[State.FAILED, State.UPSTREAM_FAILED]
+    )
 
     # Creates an EMR JobFlow, reading the config from the EMR connection.A dictionary of JobFlow overrides can be passed that override the config from the connection.
     create_job_flow = EmrCreateJobFlowOperator(
@@ -240,13 +213,6 @@ with DAG(DAG_ID,
 
     end = DummyOperator(task_id='End_to_Add_EMR_Step')
 
-    # no_reachable = DummyOperator(task_id='No_Reachable_Step')
 
-
-    # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> create_job_flow >> add_steps >> wait_for_step >> terminal_job >> end
-
-    # start >> [trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> how_to_do_next_step >> no_reachable
-
-    # start >> postgres_clear_xcom_records >> [
-    #     trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
-    start >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
+    start >> postgres_clear_xcom_records >> [
+        trigger_upload_etl_emr_to_s3, trigger_upload_source_data_to_s3] >> create_job_flow >> add_steps >> watch_step >> stop_and_remove_emr >> end
