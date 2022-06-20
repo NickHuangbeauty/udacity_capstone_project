@@ -62,7 +62,7 @@ def create_spark_session():
         .appName("spark_emr_udactity") \
         .getOrCreate()
 
-    # spark.conf.set("spark.sql.shuffle.partitions", "500")
+    # spark.conf.set("spark.sql.shuffle.partitions", "300")
 
     print(f"Spark information: {spark}")
 
@@ -109,7 +109,7 @@ def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
 
     # df_immigration_personal_tmp.explain()
 
-    numPartitions = 500
+    numPartitions = 300
     df_immigration_personal.repartition(numPartitions) \
                                .write.partitionBy("imm_person_birth_year") \
                                .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/df_immigration_personal')
@@ -165,7 +165,7 @@ def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
     # df_immigration_main_information_tmp.persist()
 
     # df_immigration_main_information_tmp.explain()
-    numPartitions = 500
+    numPartitions = 300
     df_immigration_main_information.repartition(numPartitions) \
         .write.partitionBy("imm_year", "imm_month"). \
         parquet(mode="overwrite",
@@ -212,7 +212,7 @@ def process_dim_news(spark_session, source_s3_bucket, dest_s3_bucket):
     # df_news_tmp.persist()
 
     # df_news_tmp.explain()
-    numPartitions = 500
+    numPartitions = 300
     df_news.repartition(numPartitions) \
                .write.partitionBy("news_publish_time") \
                .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/news_article_data')
@@ -266,7 +266,7 @@ def process_dim_us_cities_demographics(spark_session, source_s3_bucket, dest_s3_
     # df_us_cities_demographics_temp.persist()
 
     # df_us_cities_demographics_temp.explain()
-    numPartitions = 500
+    numPartitions = 300
     df_us_cities_demographics.repartition(numPartitions) \
                                   .write \
                                   .parquet(mode="overwrite", path=f'{dest_s3_bucket}/dimension_table/us_cities_demographics_data')
@@ -396,9 +396,9 @@ def process_fact_notifications(dest_s3_bucket,
 
     us_cities_dest = us_cities_demographics_data.join(imm_destination_city_data, us_cities_demographics_data.cidemo_state_code ==
                                                       imm_destination_city_data.value_of_alias_imm_destination_city, "inner").\
-                                                          filter((us_cities_demographics_data.cidemo_count >= 50000) & (round(us_cities_demographics_data.cidemo_median_age, 0).between(30, 60)))
+                                                          filter((us_cities_demographics_data.cidemo_count >= 30000) & (round(us_cities_demographics_data.cidemo_median_age, 0).between(30, 31)))
 
-    df_notification = t2.join(us_cities_dest, t2.imm_port == us_cities_dest.code_of_imm_destination_city).filter(t2.news_publish_time.between('2016-04-01', '2016-04-03'))
+    df_notification = t2.join(us_cities_dest, t2.imm_port == us_cities_dest.code_of_imm_destination_city).filter(t2.news_publish_time.between('2016-04-01', '2016-04-02'))
 
 
     # df_notification = spark_session.sql(
@@ -428,7 +428,7 @@ def process_fact_notifications(dest_s3_bucket,
     #                       FROM us_cities_demographics_data ucdd \
     #                     INNER JOIN imm_destination_city_data idcd \
     #                             ON ucdd.cidemo_state_code = idcd.value_of_alias_imm_destination_city \
-    #                      WHERE ucdd.cidemo_count >= 50000 \
+    #                      WHERE ucdd.cidemo_count >= 30000 \
     #                        AND ROUND(ucdd.cidemo_median_age, 0) BETWEEN 30 AND 60 ) src \
     #                ON t2.imm_port = src.code_of_imm_destination_city \
     #          WHERE t2.news_title is not null \
@@ -438,9 +438,9 @@ def process_fact_notifications(dest_s3_bucket,
     # )
 
     # Saved in AWS S3
-    numPartitions = 500
+    numPartitions = 300
     df_notification.repartition(numPartitions) \
-                   .write.partitionBy("news_publish_time", "cidemo_count") \
+                   .write.partitionBy("news_publish_time") \
                          .parquet(mode="overwrite",
                                   path=f'{dest_s3_bucket}/fact_table/notification')
 
