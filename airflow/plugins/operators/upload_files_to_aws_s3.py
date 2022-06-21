@@ -8,7 +8,7 @@ class UploadFilesFromLocalToS3(BaseOperator):
     Purpose:
         1. Upload files from local to aws s3 after access Aws Service.
     :param s3_bucket:              s3 bucket name
-    :type s3_bucket                str (templated)
+    :type s3_bucket                str
     :param s3_key                  s3 key name (is json file saved in s3 bucket location name)
     :type s3_key                   str
     :param filename_dict           files path and json filename
