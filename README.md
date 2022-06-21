@@ -1,5 +1,8 @@
 # Udacity Data Engineer Nanodegree - Capstone Project
 
+![Notification](doc_photo/mika-baumeister-Zk4QPB3-5NY-unsplash.jpg, "news")
+reference by unsplash Mika Baumeister
+
 ## Table of contents
 ---
 
@@ -29,6 +32,7 @@ They have also noted that the data quality plays a big part when analyses are ex
 The source data resides in S3 and needs to be processed in open website data of data lake in Amazon EMR. The source datasets consist of news, immigration and cities demographics data that tell about airport, pandemic news in the application after this company's data team to get legal web open data.
 ### Step 1: Scope the Project and Gather Data
 - This project data will integrate immigration, news and us cities demographics.
+
 **Dataset**
 1. [*i94*](https://www.trade.gov/national-travel-and-tourism-office)
 
@@ -53,9 +57,12 @@ The source data resides in S3 and needs to be processed in open website data of 
         - Airflow watch EMR cluster
         - Airflow terminate EMR cluster
       - Airflow Xcom
-      - Airflow Jinja2 Template
+      - Jinja2 Template
 2. Cloud: AWS
   - EMR
+    - ReleaseLabel: 
+    - InstanceType: m5.xlarge
+    - InstanceRole: one master, two cores
   - S3
 
 **Description Data**
