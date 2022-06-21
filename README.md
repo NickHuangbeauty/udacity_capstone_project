@@ -60,7 +60,7 @@ The source data resides in S3 and needs to be processed in open website data of 
       - Jinja2 Template
 2. Cloud: AWS
   - EMR
-    - ReleaseLabel: 
+    - ReleaseLabel: emr-5.36.0
     - InstanceType: m5.xlarge
     - InstanceRole: one master, two cores
   - S3
