@@ -135,7 +135,7 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 
 - Test
 <center class="half">
-  <img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300">
+  <img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"  height = "200" alt="图片名称" /><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300"  height = "200" alt="图片名称"/>
 </center>
 
 
