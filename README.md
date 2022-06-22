@@ -114,9 +114,7 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 
 *Udacity Capstone - ETL Workflow*
 
-<font color="red">Status: **Not yet implemented**</font>
-
-![ETL Workflow of Result](doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg "Airflow UI")
+<center class="half"><img src="doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg" width="500"  height = "400" alt="ETL Workflow of Result"/></center>
 
 
 #### Introduction
@@ -131,12 +129,12 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 **Below are triggers on Airflow UI process data**<br>
 <span style="color:blue">*Trigger Dag - Upload Source data from Local to AWS S3*</span>
 
-<center class="half"><img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload config and bootstrap files"/>
+<center class="half"><img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload config and bootstrap files"/>
 </center>
 
 <span style="color:blue">*Trigger Dag - Upload etl_emr script from Local to AWS S3*</span>
 
-<center class="half"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload EMR Step Script"/>
+<center class="half"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload EMR Step Script"/>
 
 
 
