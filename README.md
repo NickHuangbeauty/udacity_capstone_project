@@ -132,6 +132,12 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 <center class="half"><img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload config and bootstrap files"/>
 </center>
 
+
+- Test1 Github
+<p align="center">
+  <img width="500" src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload config and bootstrap files">
+</p>
+
 <span style="color:blue">*Trigger Dag - Upload etl_emr script from Local to AWS S3*</span>
 
 <center class="half"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload EMR Step Script"/>
