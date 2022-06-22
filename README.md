@@ -125,7 +125,7 @@ Combine two dags for automatic and monitored to control more data transfer infor
 
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for control AWS EMR cluster runtime cost not over printing.
 
-### Variables
+#### Variables
 - Variables are a generic way to store and retrieve arbitrary content or settings as a simple key value store within Airflow.
 
 ```json
