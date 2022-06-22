@@ -294,3 +294,4 @@ In Phase I, I want to integrate source data to follow below stages:
 
 3. The database needed to be accessed by 100+ people.
   In my opinion, If the database needed to be accessed by 100+ people, I should designed API for query and each Business logic procedure was stored in RMDBS like AWS EMR.
+  
