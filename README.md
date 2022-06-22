@@ -38,10 +38,6 @@ They have also noted that the data quality plays a big part when analyses are ex
 
 The source data resides in S3 and needs to be processed in open website data of data lake in Amazon EMR. The source datasets consist of news, immigration and cities demographics data that tell about airport, pandemic news in the application after this company's data team to get legal web open data.
 
-*Project Infra*
-<p align="center">
-  <img src="doc_photo/project_info.png" width="600"  height = "300" alt="ETL Workflow of Result">
-</p>
 
 
 ### Step 1: Scope the Project and Gather Data
@@ -77,7 +73,7 @@ The source data resides in S3 and needs to be processed in open website data of 
 | Source                  | Data Set Description                                                                                                                                                                                                                                                                                                                                                                    |
 |-------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [*i94*](https://www.trade.gov/national-travel-and-tourism-office)                     | This data comes from the US National Tourism and Trade Office. A data dictionary is included in the workspace.   This  is where the data comes from. There's a sample file so you can take a look at the data in csv format before reading it all in. You do not have to use the entire dataset, just use what you need to accomplish the goal you set at the beginning of the project. |
-| [*News*]()                    | News about top of biological                                                                                                                                                                                                                                                                                                                                                            |
+| [*News*](https://www.kaggle.com/datasets/allen-institute-for-ai/CORD-19-research-challenge?select=metadata.readme)                    | In response to the COVID-19 pandemic, the White House and a coalition of leading research groups have prepared the COVID-19 Open Research Dataset (CORD-19). CORD-19 is a resource of over 1,000,000 scholarly articles, including over 400,000 with full text, about COVID-19, SARS-CoV-2, and related coronaviruses.                                                                                                                                                                                                                                                                                                                                                             |
 | [*US Cities: Demographics*](https://public.opendatasoft.com/explore/dataset/us-cities-demographics/export/) | This dataset contains information about the demographics of all US cities and census-designated places with a population greater or equal to 65,000.                                                                                                                                                                                                                                    |
 ---
 ### Step 2: Explore and Assess the Data
@@ -258,3 +254,37 @@ JOB_FLOW_OVERRIDES = {
 
 ---
 ### Step 5: Complete Project Write Up
+
+*Project Infra*
+<p align="center">
+  <img src="doc_photo/project_info.png" width="600"  height = "300" alt="ETL Workflow of Result">
+</p>
+
+##### Goal
+In my project infrastructure, I try to understand what can I do simple project after finished Udacity Course. So I have an idea of how should I predict the spread of the COVID-19 and broadcast latest News for people who are immigration, travel, etc.
+
+This application could be more flexible to alert people who are transfer place to the other state. Those message should be not only provide information but also received by people location or behavior in our application to rebuild machine learning models before they accepted personal data for using.
+
+
+##### ETL Stages
+In Phase I, I want to integrate source data to follow below stages:
+> All of the data ETL process be used Airflow and automated monitoring job flow correctly or not.
+
+| Stages | Stage Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Stage1 | Upload Source Data from Local Storage to AWS S3                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| Stage2 | Upload Config, Bootstrap file from Local Storage to AWS S3                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Stage3 | Upload ETL EMR script from Local Storage to AWS S3                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Stage4 | The ETL EMR script will be transform staging table to fact and dimension tables.   Consider spark's top feature is a memory compute by cluster, so I transform 9 dimension and one fact table each table com from more than one million records.    In this project, I'm trying to deal with more complexly queries and repartition to AWS S3, but it's almost out of memory errors.    So In my less experience, I will be dealing with more complexly business logic in AWS Redshift and building API for user requests. |
+| Stage5 | Using AWS EMR Operator to monitor the job flow and terminate when the job is completed.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+
+
+Propose how often the data should be updated and why.
+
+
+Post your write-up and final data model in a GitHub repo.
+Include a description of how you would approach the problem differently under the following scenarios:
+If the data was increased by 100x.
+If the pipelines were run on a daily basis by 7am.
+If the database needed to be accessed by 100+ people.
