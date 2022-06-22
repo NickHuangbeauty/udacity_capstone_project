@@ -4,7 +4,6 @@
 <font size="2"> Reference unsplash Mika Baumeister </font>
 
 ## Table of contents
----
 
 - [Scope the Project and Gather Data](#step-1-scope-the-project-and-gather-data)
   - [Datasets](#datasets)
