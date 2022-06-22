@@ -133,7 +133,10 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 ![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
 
 
-
+- Test
+<center class="half">
+  <img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300">
+</center>
 
 
 ![Upload config and bootstrap files](doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg "Upload source data Trigger Dag")![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
