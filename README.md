@@ -147,7 +147,7 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 #### Spark Submit
 - The main of this step is executing etl_emr script for completing etl data process then reside in AWS S3.
 > ➡️ **packages saurfang:spark-sas7bdat:2.0.0-s_2.11** <br>
->  [*HINT*]: This config will automated download jar package.
+>  [*HINT*]: This config will automate download jar package.
 
 ```python
 PARK_STEPS = [
