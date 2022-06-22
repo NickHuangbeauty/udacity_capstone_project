@@ -113,6 +113,7 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 ### Step 4: Run ETL to Model the Data
 
 *Udacity Capstone - ETL Workflow*
+
 <font color="red">Status: **Not yet implemented**</font>
 
 ![ETL Workflow of Result](doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg "Airflow UI")
