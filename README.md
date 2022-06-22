@@ -167,8 +167,9 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 > ➡️ **packages saurfang:spark-sas7bdat:2.0.0-s_2.11** <br>
 >  [*HINT*]: This config will be automated download jar package.
 
+##### Spark Steps
 ```python
-PARK_STEPS = [
+SPARK_STEPS = [
     {
         "Name": "For Dealing with data and analytics using Spark on AWS EMR",
         "ActionOnFailure": "CONTINUE",
@@ -186,8 +187,12 @@ PARK_STEPS = [
     }
 ]
 ```
+- AWS EMR Steps
+<p align="center">
+  <img src="doc_photo/aws_emr_spark_step.jpeg" width="500"  height = "400" alt="Airflow Spark steps">
+</p>
 
-#### Job Flow
+##### Job Flow
 - This Job Flow can be created AWS EMR Cluster
 
 ```python
@@ -278,13 +283,14 @@ In Phase I, I want to integrate source data to follow below stages:
 | Stage4 | The ETL EMR script will be transform staging table to fact and dimension tables.   Consider spark's top feature is a memory compute by cluster, so I transform 9 dimension and one fact table each table com from more than one million records.    In this project, I'm trying to deal with more complexly queries and repartition to AWS S3, but it's almost out of memory errors.    So In my less experience, I will be dealing with more complexly business logic in AWS Redshift and building API for user requests. |
 | Stage5 | Using AWS EMR Operator to monitor the job flow and terminate when the job is completed.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 
+#### Scenarios
+1. Data was increased by 100x.
+ In AWS EMR cluster, I was distributing more than two slave cores and choosing automatic scale on the elastic instance, it should be more flexible when the data was increased 100x or more.
 
+ In some detail config, I was modify parameters like executer memory, executer number and shuffle partition and so on.
 
-Propose how often the data should be updated and why.
+2. Pipelines were run on a daily basis by 7am.
+  Airflow DAG argument for adjust timestamp to run a daily basis by 7am.
 
-
-Post your write-up and final data model in a GitHub repo.
-Include a description of how you would approach the problem differently under the following scenarios:
-If the data was increased by 100x.
-If the pipelines were run on a daily basis by 7am.
-If the database needed to be accessed by 100+ people.
+3. The database needed to be accessed by 100+ people.
+  In my opinion, If the database needed to be accessed by 100+ people, I should designed API for query and each Business logic procedure was stored in RMDBS like AWS EMR.
