@@ -96,7 +96,7 @@ The source data resides in S3 and needs to be processed in open website data of 
      read data using -> read.options(header=True, delimiter=';').csv()
 
 
-Please Refer to: [Capstone Project access data on local machine](https://github.com/NickHuangbeauty/udacity_capstone_project/blob/main/aws_emr_steps/practice_and_learn_aws_emr_process_backup.ipynb)
+Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/Explore_and_Assess_the_Data.ipynb)
 <font size="2"> *This .ipynb file is worked on local machine, so it should be modified parameters when use it on AWS EMR and AWS S3.* </font>
 
 ---
