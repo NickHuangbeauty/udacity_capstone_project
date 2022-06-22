@@ -129,6 +129,28 @@ Combine two dags for automatic and monitored to control more data transfer infor
 
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for control AWS EMR cluster runtime cost not over printing.
 
+### Variables
+- Variables are a generic way to store and retrieve arbitrary content or settings as a simple key value store within Airflow.
+
+```json
+// Import below json file in Airflow Variables
+{
+    "Bootstrap_Bucket": "mywsbucketbigdata",
+    "Ec2_Key_Pair_Name": "my-key-pair",
+    "Ec2_Subnet_Id": "subnet-XXXXXXXXX",
+    "Job_Flow_Role": "EMR_EC2_DefaultRole",
+    "Log_Bucket": "mywsbucketbigdata",
+    "Data_Bucket": "mydatapool",
+    "Service_Role": "EMR_DefaultRole",
+    "Postgres_conn_DB": "airflow_db"
+}
+```
+- Variables can be listed, created, updated and deleted from the UI (Admin -> Variables), code or CLI.
+<p align="center">
+  <img src="doc_photo/airflow_variables.jpeg" width="500"  height = "400" alt="Aiflow Variables Setting">
+</p>
+
+
 #### Trigger DAGS
 
 <span style="color:blue">*Trigger 1: Upload Source data from Local to AWS S3*</span>
@@ -147,7 +169,7 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 #### Spark Submit
 - The main of this step is executing etl_emr script for completing etl data process then reside in AWS S3.
 > ➡️ **packages saurfang:spark-sas7bdat:2.0.0-s_2.11** <br>
->  [*HINT*]: This config will automate download jar package.
+>  [*HINT*]: This config will be automated download jar package.
 
 ```python
 PARK_STEPS = [
@@ -170,7 +192,7 @@ PARK_STEPS = [
 ```
 
 #### Job Flow
-- This Job Flow is created AWS EMR Cluster
+- This Job Flow can be created AWS EMR Cluster
 
 ```python
 JOB_FLOW_OVERRIDES = {
