@@ -187,7 +187,7 @@ SPARK_STEPS = [
     }
 ]
 ```
-- AWS EMR Steps
+##### AWS EMR Steps (Spark Steps)
 <p align="center">
   <img src="doc_photo/aws_emr_spark_step.jpeg" width="500"  height = "400" alt="Airflow Spark steps">
 </p>
