@@ -1,6 +1,6 @@
 # Udacity Data Engineer Nanodegree - Capstone Project
 
-![Notification](https://github.com/NickHuangbeauty/udacity_capstone_project/blob/main/doc_photo/mika-baumeister-Zk4QPB3-5NY-unsplash.jpg "News")
+![Notification](doc_photo/mika-baumeister-Zk4QPB3-5NY-unsplash.jpeg "News")
 Reference by unsplash Mika Baumeister
 
 ## Table of contents
@@ -76,7 +76,7 @@ The source data resides in S3 and needs to be processed in open website data of 
 | US Cities: Demographics | This dataset contains information about the demographics of all US cities and census-designated places with a population greater or equal to 65,000.                                                                                                                                                                                                                                    |
 ---
 ### Step 2: Explore and Assess the Data
-####Accessing the Data
+#### Accessing the Data
 - i94 immigration data folder
   - included 12 months of 2016
   - sas data format
@@ -88,7 +88,7 @@ The source data resides in S3 and needs to be processed in open website data of 
 - US Cities Demographics
   - csv data format
 
-####Accessing the Data Methods
+#### Accessing the Data Methods
 - SAS Data Format
   - Pyspark:
      read data using -> pachage: saurfang:spark-sas7bdat:2.0.0-s_2.11
@@ -114,7 +114,7 @@ Please Refer to: [Capstone Project access data on local machine](https://github.
 ![ETL Workflow of Result](doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg "Airflow UI")
 
 
-####Introduction
+#### Introduction
 In this project, I have created two triggers for upload data when I finished download all source data from kaggle or udacity.
 
 I created a dag and named delete xcom for deleting upload data tasks when I rerun airflow each time. This step for confirm my watch step dag certainly get latest step id from AWS EMR cluster.
