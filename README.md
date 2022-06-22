@@ -40,7 +40,7 @@ The source data resides in S3 and needs to be processed in open website data of 
 
 *Project Infra*
 <p align="center">
-  <img width="500" src="doc_photo/project_info.png" width="500"  height = "400" alt="ETL Workflow of Result">
+  <img src="doc_photo/project_info.png" width="600"  height = "300" alt="ETL Workflow of Result">
 </p>
 
 
@@ -116,7 +116,7 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 *Udacity Capstone - ETL Workflow*
 
 <p align="center">
-  <img width="500" src="doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg" width="500"  height = "400" alt="ETL Workflow of Result">
+  <img src="doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg" width="500"  height = "400" alt="ETL Workflow of Result">
 </p>
 
 
@@ -134,14 +134,14 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 <span style="color:blue">*Trigger 1: Upload Source data from Local to AWS S3*</span>
 
 <p align="center">
-  <img width="500" src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload config and bootstrap files">
+  <img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload config and bootstrap files">
 </p>
 
 
 <span style="color:blue">*Trigger 2: Upload etl_emr script from Local to AWS S3*</span>
 
 <p align="center">
-  <img width="500" src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload EMR Step Script">
+  <img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="500"  height = "400" alt="Upload EMR Step Script">
 </p>
 
 #### Spark Submit
