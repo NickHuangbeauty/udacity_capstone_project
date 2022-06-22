@@ -122,7 +122,7 @@ Combine two dags for automatic and monitored to control more data transfer infor
 
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for control AWS EMR cluster runtime cost not over printing.
 
-**Below are triggers on Airflow UI process data**
+**Below are triggers on Airflow UI process data**<br>
 <span style="color:blue">*Trigger Dag - Upload Source data from Local to AWS S3*</span>
 ![Upload config and bootstrap files](doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg "Upload source data Trigger Dag")
 
