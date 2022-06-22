@@ -1,7 +1,7 @@
 # Udacity Data Engineer Nanodegree - Capstone Project
 
 ![Notification](doc_photo/mika-baumeister-Zk4QPB3-5NY-unsplash.jpeg "News")
-Reference by unsplash Mika Baumeister
+<font size="2"> Reference unsplash Mika Baumeister </font>
 
 ## Table of contents
 ---
