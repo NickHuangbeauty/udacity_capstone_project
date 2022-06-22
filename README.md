@@ -11,10 +11,13 @@
   - [Description Data](#description)
 
 - [Explore and Assess the Data](#step-2-explore-and-assess-the-data)
+  - [Accessing the Data](#accessing-the-data)
+  - [Accessing the Data Methods](#accessing-the-data-methods)
 
 - [Define the Data Model](#step-3-define-the-data-model)
 
 - [Run ETL to Model the Data](#step-4-run-etl-to-model-the-data)
+  - [Introduction](#introduction)
 
 - [Complete Project Write Up](#step-5-complete-project-write-up)
 
@@ -128,6 +131,13 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 
 <span style="color:blue">*Trigger Dag - Upload etl_emr script from Local to AWS S3*</span>
 ![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
+
+
+
+
+
+![Upload config and bootstrap files](doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg "Upload source data Trigger Dag")![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
+
 
 ---
 ### Step 5: Complete Project Write Up
