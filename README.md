@@ -113,6 +113,7 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 ### Step 4: Run ETL to Model the Data
 
 <span style="color:blue">*Udacity Capstone - ETL Workflow*</span>
+
 ![ETL Workflow of Result](doc_photo/dag_main_etl_process_graph_from_airflowUI.jpeg "Airflow UI")
 
 
@@ -127,19 +128,14 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 
 **Below are triggers on Airflow UI process data**<br>
 <span style="color:blue">*Trigger Dag - Upload Source data from Local to AWS S3*</span>
-![Upload config and bootstrap files](doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg "Upload source data Trigger Dag")
 
-<span style="color:blue">*Trigger Dag - Upload etl_emr script from Local to AWS S3*</span>
-![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
-
-
-- Test
-<center class="half">
-  <img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload config and bootstrap files" /><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload EMR Step Script"/>
+<center class="half"><img src="doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload config and bootstrap files"/>
 </center>
 
+<span style="color:blue">*Trigger Dag - Upload etl_emr script from Local to AWS S3*</span>
 
-![Upload config and bootstrap files](doc_photo/dag_upload_data_to_s3_from_airflowUI.jpeg "Upload source data Trigger Dag")![Upload EMR Step Script](doc_photo/dag_upload_emr_script_from_airflowUI.jpeg "ETL EMT Trigger Dag")
+<center class="half"><img src="doc_photo/dag_upload_emr_script_from_airflowUI.jpeg" width="300"  height = "200" alt="Upload EMR Step Script"/>
+
 
 
 ---
