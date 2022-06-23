@@ -35,9 +35,6 @@ SOURCE_S3_BUCKET = 's3://mydatapool'
 DEST_S3_BUCKET = 's3://destetlbucket'
 # *********************************************
 
-# TODO ***** Local Testing configure ************
-# SOURCE_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/'
-# DEST_S3_BUCKET = '/Users/oneforall_nick/workspace/Udacity_capstone_project/airflow/dest_data'
 
 # ***** Local Testing configure *****************
 
@@ -55,6 +52,7 @@ def create_spark_session():
     """
     Purpose:
         Build an access spark session for dealing data ETL of Data Lake
+
     :return: spark session
     """
     spark = SparkSession \
@@ -72,17 +70,17 @@ def create_spark_session():
 
 
 def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
-    """process_dim_immigration _summary_
-
-    _extended_summary_
+    """
+    Purpose:
+        Load immigration data from AWS S3 bucket and go though the ETL process by AWS ERM and then restored AWS S3
 
     Args:
-        spark (_type_): _description_
-        SOURCE_S3_BUCKET (_type_): _description_
-        DEST_S3_BUCKET (_type_): _description_
+        spark_session: spark session
+        SOURCE_S3_BUCKET str: AWS S3 Bucket where is stored source data.
+        DEST_S3_BUCKET str: AWS S3 Bucket where is stored processed data
 
     Returns:
-        _type_: _description_
+        DataFrame: df_immigration_main_information and df_immigration_personal
     """
     imm_path = os.path.join(
         source_s3_bucket, "data/immigration_data/immigration_apr16_sub.sas7bdat")
@@ -116,7 +114,9 @@ def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
 
     # Dimension Table: Immigration main data
     def convert_to_datetime(days: DoubleType) -> datetime:
-        """convert_to_datetime converts days to datetime format
+        """
+        Purpose:
+            convert_to_datetime converts days to datetime format
 
         Args:
             days (DoubleType): from sas arrive or departure date
@@ -174,14 +174,17 @@ def process_dim_immigration(spark_session, source_s3_bucket, dest_s3_bucket):
 
 
 def process_dim_news(spark_session, source_s3_bucket, dest_s3_bucket):
-    """process_dim_news _summary_
-
-    _extended_summary_
+    """
+    Purpose
+        Load news data from AWS S3 bucket and go though the ETL process by AWS ERM and then restored AWS S3
 
     Args:
-        spark (_type_): _description_
-        SOURCE_S3_BUCKET (_type_): _description_
-        DEST_S3_BUCKET (_type_): _description_
+        spark_session: spark session
+        SOURCE_S3_BUCKET str: AWS S3 Bucket where is stored source data.
+        DEST_S3_BUCKET str: AWS S3 Bucket where is stored processed data.
+
+    Returns:
+        DataFrame: df_news
     """
     news_path = os.path.join(source_s3_bucket, "data/news_data/metadata.csv")
 
@@ -221,14 +224,17 @@ def process_dim_news(spark_session, source_s3_bucket, dest_s3_bucket):
 
 
 def process_dim_us_cities_demographics(spark_session, source_s3_bucket, dest_s3_bucket):
-    """process_dim_us_cities_demographics _summary_
-
-    _extended_summary_
+    """
+    Purpose
+        Load us-cities-demographics data from AWS S3 bucket and go though the ETL process by AWS ERM and then restored AWS S3
 
     Args:
-        spark (_type_): _description_
-        SOURCE_S3_BUCKET (_type_): _description_
-        DEST_S3_BUCKET (_type_): _description_
+        spark_session: spark session
+        SOURCE_S3_BUCKET str: AWS S3 Bucket where is stored source data.
+        DEST_S3_BUCKET str: AWS S3 Bucket where is stored processed data.
+
+    Returns:
+        DataFrame: df_us_cities_demographics
     """
     us_cities_demographics_path = os.path.join(source_s3_bucket, "data/usCitiesDemographics_data/usCitiesDemo.csv")
 
@@ -275,17 +281,17 @@ def process_dim_us_cities_demographics(spark_session, source_s3_bucket, dest_s3_
 
 
 def process_dim_label(spark_session, s3_access, dest_s3_bucket):
-    """process_dim_label _summary_
-
-    _extended_summary_
+    """
+    Purpose
+        Load immigration-label data from AWS S3 bucket and go though the ETL process by AWS ERM and then restored AWS S3
 
     Args:
-        spark (_type_): _description_
-        SOURCE_S3_BUCKET (_type_): _description_
-        DEST_S3_BUCKET (_type_): _description_
+        spark_session: spark session
+        SOURCE_S3_BUCKET str: AWS S3 Bucket where is stored source data.
+        DEST_S3_BUCKET str: AWS S3 Bucket where is stored processed data.
 
     Returns:
-        _type_: _description_
+        DataFrame: df_imm_destination_city
     """
 
     s3_object = s3_access.Bucket('mydatapool').Object(
@@ -377,16 +383,24 @@ def process_fact_notifications(dest_s3_bucket,
                                news_article_data,
                                us_cities_demographics_data,
                                imm_destination_city_data) -> None:
-    """process_fact_notifications _summary_
+    """
+    Purpose
+        Join dimension tables for ETL processed by AWS ERM and then restored fact table to AWS S3.
+        ** t1: join imm two tables (imm_personal and imm_information)
+        ** t2: join news table with t1 (news_article_data)
+        ** us_cities_dest: join us_cities_demographics_data and imm_destination_city_data
+        ** df_notification: join us cities table with t2
 
-    _extended_summary_
-        ** t1: join imm two tables
-        ** t2: join news table with t1
-        ** t3: join us cities table with t2
     Args:
-        spark (_type_): _description_
-        SOURCE_S3_BUCKET (_type_): _description_
-        DEST_S3_BUCKET (_type_): _description_
+        spark_session: spark session
+        SOURCE_S3_BUCKET str: AWS S3 Bucket where is stored source data.
+        dest_s3_bucket str: AWS S3 Bucket where is stored processed data.
+        imm_information DataFrame: After ETL Processed dimension data. (immigration data)
+        imm_personal DataFrame: After ETL Processed dimension data. (immigration data)
+        news_article_data DataFrame: After ETL Processed dimension data. (news articles data)
+        us_cities_demographics_data DataFrame: After ETL Processed dimension data. (us cities demographics data)
+        imm_destination_city_data DataFrame: After ETL Processed dimension data. (immigration data)
+
     """
 
     t1 = imm_information.join(imm_personal, imm_information.imm_main_cic_id ==
