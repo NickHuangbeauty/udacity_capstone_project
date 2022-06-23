@@ -103,7 +103,11 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 
 ---
 ### Step 3: Define the Data Model
-<!-- TODO: Using spark printSchema function to display the dimensions and fact tables-->
+> This project data model was designed start schema. It was separated from source data to 9 dimension tables and one fact table.
+
+<p align="center">
+  <img src="doc_photo/data_model.png" width="800"  height = "500" alt="Upload config and bootstrap files">
+</p>
 
 
 ---
@@ -285,9 +289,7 @@ In Phase I, I want to integrate source data to follow below stages:
 
 #### Scenarios
 1. Data was increased by 100x.
- In AWS EMR cluster, I was distributing more than two slave cores and choosing automatic scale on the elastic instance, it should be more flexible when the data was increased 100x or more.
-
- In some detail config, I was modify parameters like executer memory, executer number and shuffle partition and so on.
+ In AWS EMR cluster, I was distributing more than two slave cores and choosing automatic scale on the elastic instance, it should be more flexible when the data was increased 100x or more.In some detail config, I was modify parameters like executer memory, executer number and shuffle partition and so on.
 
 2. Pipelines were run on a daily basis by 7am.
   Airflow DAG argument for adjust timestamp to run a daily basis by 7am.
