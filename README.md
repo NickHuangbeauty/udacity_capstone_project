@@ -10,8 +10,8 @@
   - [Description Data](#description)
 
 - [Explore and Assess the Data](#step-2-explore-and-assess-the-data)
-  - [Accessing the Data](#access-the-data)
-  - [Accessing the Data Methods](#access-the-data-methods)
+  - [Access the Data](#access-the-data)
+  - [Access the Data Methods](#access-the-data-methods)
 
 - [Define the Data Model](#step-3-define-the-data-model)
 
