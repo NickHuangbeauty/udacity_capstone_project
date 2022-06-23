@@ -22,7 +22,7 @@
   - [Spark Submit](#spark-submit)
     - [Spark Steps](#spark-steps)
     - [AWS EMR Steps (Spark Steps)](#aws-emr-steps-spark-steps)
-    - [Job Flow](#job-flow)
+  - [Job Flow](#job-flow)
 
 - [Complete Project Write Up](#step-5-complete-project-write-up)
   - [Goal](#goal)
@@ -202,7 +202,7 @@ SPARK_STEPS = [
   <img src="doc_photo/aws_emr_spark_step.jpeg" width="500"  height = "400" alt="Airflow Spark steps">
 </p>
 
-##### Job Flow
+#### Job Flow
 - This Job Flow can be created AWS EMR Cluster
 
 ```python
