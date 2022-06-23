@@ -103,7 +103,7 @@ Please Refer to: [Capstone Project access data on local machine](aws_emr_steps/E
 
 ---
 ### Step 3: Define the Data Model
-> This project data model was designed start schema. It was separated from source data to 9 dimension tables and one fact table.
+> This project data model was designed star schema. It was separated from source data to 9 dimension tables and one fact table.
 
 <p align="center">
   <img src="doc_photo/data_model.png" width="800"  height = "500" alt="Upload config and bootstrap files">
