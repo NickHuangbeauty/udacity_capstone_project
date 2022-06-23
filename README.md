@@ -141,6 +141,18 @@ Combine two dags for automation and monitoring to control more data transfer inf
 
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for controlling AWS EMR cluster runtime cost not over printing.
 
+#### Data Dictionary
+| # | Table Name              | Field Name            | Data Type | Description     | Example |
+|---|-------------------------|-----------------------|-----------|-----------------|---------|
+| 1 | df_immigration_personal | imm_per_cic_id        | string    | Unique ID       | 6.0     |
+| 2 | df_immigration_personal | imm_person_gender     | string    | Gender          | M       |
+| 3 | df_immigration_personal | imm_visatype          | string    | Visa Type       | B2      |
+| 4 | df_immigration_personal | imm_person_birth_year | category  | Passenger Birth | 2012    |
+| 1 | imm_address             | code_of_imm_address   | string    | Address Code    | AL      |
+| 2 | imm_address             | value_of_imm_address  | string    | Address Value   | ALABAMA |
+
+
+
 
 #### Variables
 - Variables are a generic way to store and retrieve arbitrary content or settings as a simple key-value store within Airflow.
@@ -311,6 +323,19 @@ In Phase I, I want to integrate source data on the below stages:
 | Stage3 | Upload ETL EMR script from Local Storage to AWS S3                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Stage4 | The ETL EMR script will transform the staging tables into fact and dimension tables.   Consider spark's top feature is a memory compute by cluster, so I transform 9 dimensions and one fact table each table com from more than one million records.    In this project, I'm trying to deal with more complex queries and repartition to AWS S3, but it's almost out of memory errors.    So In my less experience, I will be dealing with more complex business logic in AWS Redshift and building API for user requests. |
 | Stage5 | Using AWS EMR Operator to monitor the job flow and terminate when the job is completed.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+#### Data Update Frequency
+- Propose how often the data should be updated and why?
+According to the main consist of data:
+  -> Update data frequency: one times a month
+  1. If the data content is consist of personal data, such as personal birth, name, gender, etc.
+  2. Base information about city code, address, airport code, state code, visit type, etc.
+  -> Update data frequency: one times a week
+  1. Total Population
+  2. Median Age
+  -> Update data frequency: immediately
+  1. people's arrival time (Because it is a key to know population at some arrived time)
+  2. News Information about COVID-19
 
 #### Scenarios
 1. Data was increased by 100x.
