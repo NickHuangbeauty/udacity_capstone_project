@@ -135,6 +135,7 @@ Combine two dags for automatic and monitored to control more data transfer infor
 
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for control AWS EMR cluster runtime cost not over printing.
 
+
 #### Variables
 - Variables are a generic way to store and retrieve arbitrary content or settings as a simple key value store within Airflow.
 
@@ -266,6 +267,18 @@ JOB_FLOW_OVERRIDES = {
     "VisibleToAllUsers": True
 }
 ```
+
+ETL Main DAG
+Please Refer to: [dag_etl_aws_emr](airflow/dags/dag_etl_aws_emr.py)
+
+Trigger: Upload Source from local to AWS S3
+Please Refer to: [dag_upload_data_to_aws_s3](airflow/dags/dag_upload_data_to_aws_s3.py)
+
+Trigger: Upload ETL EMR script from local to AWS S3
+Please Refer to: [dag_upload_data_to_aws_s3](airflow/dags/dag_upload_data_to_aws_s3.py)
+
+Spark EMR Step
+Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
 
 ---
 ### Step 5: Complete Project Write Up
