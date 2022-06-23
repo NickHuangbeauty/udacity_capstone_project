@@ -17,11 +17,17 @@
 
 - [Run ETL to Model the Data](#step-4-run-etl-to-model-the-data)
   - [Introduction](#introduction)
+  - [Variables](#variables)
   - [Triggers](#trigger-dags)
   - [Spark Submit](#spark-submit)
-  - [Job Flow](#job-flow)
+    - [Spark Steps](#spark-steps)
+    - [AWS EMR Steps (Spark Steps)](#aws-emr-steps-spark-steps)
+    - [Job Flow](#job-flow)
 
 - [Complete Project Write Up](#step-5-complete-project-write-up)
+  - [Goal](#goal)
+  - [ETL Stages](#etl-stages)
+  - [Scenarios](#scenarios)
 
 ---
 
