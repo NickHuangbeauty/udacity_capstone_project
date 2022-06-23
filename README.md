@@ -293,5 +293,7 @@ In Phase I, I want to integrate source data to follow below stages:
   Airflow DAG argument for adjust timestamp to run a daily basis by 7am.
 
 3. The database needed to be accessed by 100+ people.
-  In my opinion, If the database needed to be accessed by 100+ people, I should designed API for query and each Business logic procedure was stored in RMDBS like AWS EMR.
-  
+  In my opinion, If the database needed to be accessed by 100+ people, I should designed API for query and each according to business logic that was stored in RMDBS like PG or Spark Hive.
+  <p align="center">
+    <img src="doc_photo/idea_of_concept.png" width="400"  height = "50" alt="ETL Workflow of Result">
+  </p>
