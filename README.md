@@ -142,16 +142,53 @@ Combine two dags for automation and monitoring to control more data transfer inf
 Use EMR Operators for automatic and monitored my AWS EMR cluster status and terminate when all tasks are completed. It's for controlling AWS EMR cluster runtime cost not over printing.
 
 #### Data Dictionary
-| # | Table Name              | Field Name            | Data Type | Description     | Example |
-|---|-------------------------|-----------------------|-----------|-----------------|---------|
-| 1 | df_immigration_personal | imm_per_cic_id        | string    | Unique ID       | 6.0     |
-| 2 | df_immigration_personal | imm_person_gender     | string    | Gender          | M       |
-| 3 | df_immigration_personal | imm_visatype          | string    | Visa Type       | B2      |
-| 4 | df_immigration_personal | imm_person_birth_year | category  | Passenger Birth | 2012    |
+| #  | Table Name                     | Field Name            | Data Type | Description     | Example |
+|--- |------------------------------- |-----------------------|-----------|-----------------|---------|
+| 1  | df_immigration_personal        | imm_per_cic_id        | string    | Unique ID       | 6.0     |
+| 2  | df_immigration_personal        | imm_person_gender     | string    | Gender          | M       |
+| 3  | df_immigration_personal        | imm_visatype          | string    | Visa Type       | B2      |
+| 4  | df_immigration_personal        | imm_person_birth_year | category  | Passenger Birth | 2012    |
+| 1  | df_immigration_main_information | imm_main_cic_id    | integer   | Unique Code       | 15         |
+| 2  | df_immigration_main_information | imm_year           | integer   | immigration year  | 2016       |
+| 3  | df_immigration_main_information | imm_month          | integer   | immigration month | 4          |
+| 4  | df_immigration_main_information | imm_cntyl          | integer   | imm cntyl         | 101        |
+| 5  | df_immigration_main_information | imm_visa           | integer   | visa type         | 2          |
+| 6  | df_immigration_main_information | imm_port           | string    | port              | WAS        |
+| 7  | df_immigration_main_information | imm_arrival_date   | date      | arrival date      | 2016-04-01 |
+| 8  | df_immigration_main_information | imm_departure_date | date      | departure date    | 2016-08-25 |
+| 9  | df_immigration_main_information | imm_model          | integer   | Air, Sea or Land  | 1          |
+| 10 | df_immigration_main_information | imm_address        | string    | address           | MI         |
+| 11 | df_immigration_main_information | imm_airline        | string    | airline           | OS         |
+| 12 | df_immigration_main_information | imm_flight_no      | string    | flight number     | 93         |
+| 1  | df_news                         | news_cord_uid     | string    | Unique Code       | vho70jcx    |
+| 2  | df_news                         | news_source       | string    | News Source       | biorxiv     |
+| 3  | df_news                         | news_title        | string    | News Title        | SIANN ..    |
+| 4  | df_news                         | news_licence      | string    | Licence           | biorxiv     |
+| 5  | df_news                         | news_abstract     | string    | News Abstract     | Next-ge...  |
+| 6  | df_news                         | news_publish_time | date      | News Publish Time | 2014-01-10  |
+| 7  | df_news                         | news_authors      | string    | Authors           | Samuel...   |
+| 8  | df_news                         | news_url          | string    | News URL          | https: /... |
+| 1  | df_us_cities_demographics       | cidemo_city             | string    | Us City          | Quincy        |
+| 2  | df_us_cities_demographics       | cidemo_state            | string    | State            | Massachusetts |
+| 3  | df_us_cities_demographics       | cidemo_median_age       | float     | Median Age       | 41.0          |
+| 4  | df_us_cities_demographics       | cidemo_total_population | integer   | Total Population | 93629         |
+| 5  | df_us_cities_demographics       | cidemo_state_code       | string    | State Code       | MA            |
+| 6  | df_us_cities_demographics       | cidemo_count            | integer   | Conut            | 58723         |
+| 7  | df_us_cities_demographics       | cidemo_id               | long      | Unique Code      | 1             |
+| 1  | df_imm_city_res_label           | col_of_imm_cntyl                 | integer   | immigration cntyl code          | 582                  |
+| 2  | df_imm_city_res_label           | value_of_imm_cntyl               | string    | immigration cntyl mapping value            | and Not Reported ..  |
+| 3  | df_imm_city_res_label           | value_of_imm_cntyl_organizations | string    | cntyl organizations       | and Not Reported ... |
+| 1  | df_imm_destination_city         | code_of_imm_destination_city        | string    | City Code          | ALC         |
+| 2  | df_imm_destination_city         | value_of_imm_destination_city       | string    | City Mapping Value | ALCAN       |
+| 3  | df_imm_destination_city         | value_of_alias_imm_destination_city | string    | City Mapping Alias | AK          |
+| 1  | df_imm_travel_code              | code_of_imm_travel_code             | Integer   | Travel Code          | 1           |
+| 2  | df_imm_travel_code              | value_of_imm_travel_code            | string    | Travel Mapping Value | Air         |
+| 1  | df_imm_address                  | code_of_imm_address                 | string    | Address Code          | AL          |
+| 2  | df_imm_address                  | value_of_imm_address                | string    | Address Mapping Value | ALABAMA     |
+| 1  | imm_visa                        | code_of_imm_visa                    | Integer   | Visa Code          | 1           |
+| 2  | imm_visa                        | value_of_imm_visa                   | string    | Visa Mapping Value | Business    |
 | 1 | imm_address             | code_of_imm_address   | string    | Address Code    | AL      |
 | 2 | imm_address             | value_of_imm_address  | string    | Address Value   | ALABAMA |
-
-
 
 
 #### Variables
