@@ -17,6 +17,7 @@
 
 - [Run ETL to Model the Data](#step-4-run-etl-to-model-the-data)
   - [Introduction](#introduction)
+  - [Data Dictionary](#data-dictionary)
   - [Variables](#variables)
   - [Triggers](#trigger-dags)
   - [Spark Submit](#spark-submit)
