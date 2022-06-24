@@ -24,6 +24,7 @@
     - [Spark Steps](#spark-steps)
     - [AWS EMR Steps (Spark Steps)](#aws-emr-steps-spark-steps)
   - [Job Flow](#job-flow)
+  - [Data Quality Check](#data-quality)
 
 - [Complete Project Write Up](#step-5-complete-project-write-up)
   - [Goal](#goal)
@@ -335,6 +336,13 @@ Please Refer to: [dag_upload_data_to_aws_s3](airflow/dags/dag_upload_data_to_aws
 
 Spark EMR Step
 Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
+
+
+#### Data Quality
+- Two quality check to ensure completeness
+1. No empty data after ETL pipeline and matches all table schema of data model
+2. Check count of source and ETL processed data
+Please refer to: [Data Quality](data_quality/data_quality_check.ipynb)
 
 ---
 ### Step 5: Complete Project Write Up
