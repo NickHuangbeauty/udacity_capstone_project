@@ -18,6 +18,7 @@
 - [Run ETL to Model the Data](#step-4-run-etl-to-model-the-data)
   - [Introduction](#introduction)
   - [Data Dictionary](#data-dictionary)
+  - [How to use the tables?](#how-to-use-the-tables)
   - [Variables](#variables)
   - [Triggers](#trigger-dags)
   - [Spark Submit](#spark-submit)
@@ -193,6 +194,15 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 | 2 | imm_address             | value_of_imm_address  | string    | Address Value   | ALABAMA |
 
 
+#### How to use the tables?
+The main of my project idea is how to provide a useful information for our customers to know more COVID-19 spreed and news.
+
+Purpose:
+  1. Training Data: Depending on this aim, users could query the news table for machine learning before customers received news articles.
+
+  2. People behavior and pandemic spread: With this aim, users could join dimension tables like imm_personal, imm_travel, and destination_city to gain more information about the pandemic spread with people's behavior.
+
+
 #### Variables
 - Variables are a generic way to store and retrieve arbitrary content or settings as a simple key-value store within Airflow.
 
@@ -341,7 +351,7 @@ Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
 #### Data Quality
 - Two quality check to ensure completeness
 1. No empty data after ETL pipeline and matches all table schema of data model
-2. Check count of source and ETL processed data
+2. Check count of source and after ETL processed data
 Please refer to: [Data Quality](data_quality/data_quality_check.ipynb)
 
 ---
