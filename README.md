@@ -347,9 +347,11 @@ Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
 
 
 #### Data Quality
-- Two quality check to ensure completeness
-1. No empty data after ETL pipeline and matches all table schema of data model
-2. Check count of source and after ETL processed data
+- Quality check to ensure completeness
+1. Ckeck each dimension table if there are duplicate IDs.
+2. There are no empty data.
+3. Source/ count checks to ensure completeness.
+
 Please refer to: [Data Quality](data_quality/data_quality_check.ipynb)
 
 ---
