@@ -180,7 +180,6 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 | 7  | df_us_cities_demographics       | cidemo_id               | long      | Unique Code      | 1             |
 | 1  | df_imm_city_res_label           | col_of_imm_cntyl                 | integer   | immigration cntyl code          | 582                  |
 | 2  | df_imm_city_res_label           | value_of_imm_cntyl               | string    | immigration cntyl mapping value            | and Not Reported ..  |
-| 3  | df_imm_city_res_label           | value_of_imm_cntyl_organizations | string    | cntyl organizations       | and Not Reported ... |
 | 1  | df_imm_destination_city         | code_of_imm_destination_city        | string    | City Code          | ALC         |
 | 2  | df_imm_destination_city         | value_of_imm_destination_city       | string    | City Mapping Value | ALCAN       |
 | 3  | df_imm_destination_city         | value_of_alias_imm_destination_city | string    | City Mapping Alias | AK          |
