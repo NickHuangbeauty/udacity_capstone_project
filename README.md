@@ -187,10 +187,8 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 | 2  | df_imm_travel_code              | value_of_imm_travel_code            | string    | Travel Mapping Value | Air         |
 | 1  | df_imm_address                  | code_of_imm_address                 | string    | Address Code          | AL          |
 | 2  | df_imm_address                  | value_of_imm_address                | string    | Address Mapping Value | ALABAMA     |
-| 1  | imm_visa                        | code_of_imm_visa                    | Integer   | Visa Code          | 1           |
-| 2  | imm_visa                        | value_of_imm_visa                   | string    | Visa Mapping Value | Business    |
-| 1 | imm_address             | code_of_imm_address   | string    | Address Code    | AL      |
-| 2 | imm_address             | value_of_imm_address  | string    | Address Value   | ALABAMA |
+| 1  | df_imm_visa                        | code_of_imm_visa                    | Integer   | Visa Code          | 1           |
+| 2  | df_imm_visa                        | value_of_imm_visa                   | string    | Visa Mapping Value | Business    |
 
 
 #### How to use the tables?
@@ -199,7 +197,7 @@ The main of my project idea is how to provide a useful information for our custo
 Purpose:
   1. Training Data: Depending on this aim, users could query the news table for machine learning before customers received news articles.
 
-  2. People behavior and pandemic spread: With this aim, users could join dimension tables like imm_personal, imm_travel, and destination_city to gain more information about the pandemic spread with people's behavior.
+  2. People behavior and pandemic spread by people's traffic tools: With this aim, users could join dimension tables like imm_address, imm_travel to gain more information about the pandemic spread with people's behavior.
 
 
 #### Variables
