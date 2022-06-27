@@ -197,8 +197,9 @@ The main of my project idea is how to provide a useful information for our custo
 Purpose:
   1. Training Data: Depending on this aim, users could query the news table for machine learning before customers received news articles.
 
-  2. People behavior and pandemic spread by people's traffic tools: With this aim, users could join dimension tables like imm_address, imm_travel to gain more information about the pandemic spread with people's behavior.
+  2. People's behavior and pandemic spread by people's traffic tools: With this aim, users could join dimension tables like imm_address, and imm_travel to gain more information about the pandemic spread with people's behavior.
 
+Please Refer to: [How to use the tables](data_quality/how_to_use_table.ipynb)
 
 #### Variables
 - Variables are a generic way to store and retrieve arbitrary content or settings as a simple key-value store within Airflow.

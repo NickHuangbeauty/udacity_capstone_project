@@ -150,7 +150,7 @@ with DAG(DAG_ID,
         task_id='delete_xcom_task',
         postgres_conn_id='pg_conn',
         autocommit=True,
-        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND execution_date = '{{{{ dag_run.logical_date | ds }}}}';"
+        sql=f"DELETE FROM xcom WHERE dag_id = '{DAG_ID}' AND run_id = '{{{{ dag_run.logical_date | ds }}}}';"
     )
 
     # Trigger 1: for upland etl_emr file from local to aws s3
