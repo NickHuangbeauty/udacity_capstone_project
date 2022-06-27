@@ -340,10 +340,10 @@ Trigger: Upload Source from local to AWS S3
 Please Refer to: [dag_upload_data_to_aws_s3](airflow/dags/dag_upload_data_to_aws_s3.py)
 
 Trigger: Upload ETL EMR script from local to AWS S3
-Please Refer to: [dag_upload_data_to_aws_s3](airflow/dags/dag_upload_data_to_aws_s3.py)
+Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
 
 Spark EMR Step
-Please Refer to: [dag_upload_emr_script](airflow/dags/dag_upload_emr_script.py)
+Please Refer to: [data_spark_on_emr](aws_emr_steps/data_spark_on_emr.py)
 
 
 #### Data Quality
