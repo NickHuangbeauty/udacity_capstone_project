@@ -35,11 +35,23 @@
 ---
 
 > **Local Machine Environment Settings:**
->> 1. Spark: 2.4.8 (Pyspark)
->> 2. Hadoop: 2.7
->> 3. Python: 3.7
->> 4. Java: 8
->> 5. Scala: 2.11
+1. Spark: 2.4.8 (Pyspark)
+  because of scala 2.11 version was supported by spark 2.4.8
+2. Hadoop: 2.7
+3. Python: 3.7
+4. Java: 1.8
+  reference repo: [Jenv](https://github.com/jenv/jenv)
+5. Scala: 2.11
+  because of this project used sas data format and it was compiled scala 2.11
+
+*Not for using*
+1. Python
+  -> Version management tool: [Pyenv](https://github.com/pyenv/pyenv)
+  -> Package management tool: [Pipenv](https://github.com/pypa/pipenv), [Poetry](https://github.com/python-poetry/poetry)
+
+2. Unit Test
+  -> unnuttest
+  -> pytest
 
 
 *Purpose for this project*
@@ -76,6 +88,19 @@ The source data resides in AWS S3 and needs to be processed in the open website 
         - Airflow terminate EMR cluster
       - Airflow Xcom
       - Jinja2 Template
+
+> **Airflow Operator**
+```shell
+# Setting flow airflow.cfg
+$ cd ~/airflow/home/dags
+
+# Start Airflow web and Server
+# Not usr all in one airflow standalone server
+$ airflow webserver -p 8080
+
+$ airflow scheduler
+```
+
 
 **Cloud: AWS**
   - EMR
