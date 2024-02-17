@@ -44,17 +44,16 @@
 5. Scala: 2.11
   because of this project used sas data format and it was compiled scala 2.11
 
-*Not for using*
+*Tool for manageming*
 1. Python
   -> Version management tool: [Pyenv](https://github.com/pyenv/pyenv)
   -> Package management tool: [Pipenv](https://github.com/pypa/pipenv), [Poetry](https://github.com/python-poetry/poetry)
 
 2. Unit Test
-  -> unnuttest
   -> pytest
 
 
-*Purpose for this project*
+*Purpose*
 
 A health digital company, HealthCare, has decided that it is time to provide more automation and monitoring of COVID-19 news information for their users. In order to complete the ETL pipelines that the best tool to achieve this is Apache Airflow.
 
