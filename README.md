@@ -36,7 +36,7 @@
 
 > **Local Machine Environment Settings:**
 1. Spark: 2.4.8 (Pyspark)
-  because of scala 2.11 version was supported by spark 2.4.8
+  This version is supported by Spark 2.4.8.
 2. Hadoop: 2.7
 3. Python: 3.7
 4. Java: 1.8
@@ -55,7 +55,7 @@
 
 *Purpose*
 
-A health digital company, HealthCare, has decided that it is time to provide more automation and monitoring of COVID-19 news information for their users. In order to complete the ETL pipelines that the best tool to achieve this is Apache Airflow.
+HealthCare, a digital health company, aims to enhance automation and monitoring of COVID-19 news for its users. In order to complete the ETL pipelines that the best tool to achieve this is Apache Airflow.
 
 They have decided to use the Hadoop ecosystem to process the data on Amazon EMR. The data is stored in the AWS S3 bucket.
 
@@ -216,7 +216,7 @@ Use EMR Operators for automatic and monitored my AWS EMR cluster status and term
 
 
 #### How to use the tables?
-The main of my project idea is how to provide a useful information for our customers to know more COVID-19 spreed and news.
+The primary goal of this project is to provide useful information about COVID-19 spread and news to our customers.
 
 Purpose:
   1. Training Data: Depending on this aim, users could query the news table for machine learning before customers received news articles.
